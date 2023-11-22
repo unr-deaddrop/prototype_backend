@@ -40,8 +40,8 @@ class Endpoint(models.Model):
     # What protocol and agent does this endpoint use, if any?
     # Also, block endpoints from destruction if an agent or protocol is deleted
     agent = models.ForeignKey(Agent, on_delete=models.PROTECT, related_name="endpoints")
-    protocol = models.ForeignKey(
-        Protocol, on_delete=models.PROTECT, related_name="endpoints"
+    protocols = models.ManyToManyField(
+        Protocol, related_name="endpoints"
     )
     # Encryption key used in communications, if any
     encryption_key = models.CharField(max_length=64, blank=True, null=True)
