@@ -1,0 +1,10 @@
+# Functional
+django
+
+# Linting
+black
+mypy
+django-stubs[compatible-mypy]
+flake8
+flake8-bugbear
+tox
