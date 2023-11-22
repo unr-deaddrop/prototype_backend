@@ -149,7 +149,7 @@ class Log(models.Model):
     # it to be associated with arbitrary models, could help with organization
     category = models.CharField(max_length=32, blank=True, null=True)
     # Enum field, levels are likely to be 0 - 5
-    level = models.IntegerField(max_length=1, blank=True, null=True)
+    level = models.IntegerField(blank=True, null=True)
     # Time of log (ideally, relative to server time; these should be timezone aware)
     timestamp = models.DateTimeField()
     # Actual log message
