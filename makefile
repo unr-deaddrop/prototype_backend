@@ -8,5 +8,8 @@ migrate:
 shell:
 	python3 manage.py shell
 
+cshell:
+	python3 manage.py shell < shellTest.py
+
 all:
 	make migrate run
