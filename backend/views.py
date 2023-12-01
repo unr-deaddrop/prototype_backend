@@ -21,6 +21,29 @@ def addAgent(request):
     return Response(serializer.data)
 
 # Credentials
+class CredentialViewSet(viewsets.ModelViewSet):
+    queryset = Credential.objects.all()
+    serializer = CredentialSerializer
+    
+    # def list(self, request):
+    #     serializer = self.get_serializer(self.get_queryset(), many=True)
+    #     return self.get_paginated_response(self.paginate_queryset(serializer.data))
+
+    # def create(self, request):
+    #     pass
+
+    # def retrieve(self, request, pk=None):
+    #     pass
+
+    # def update(self, request, pk=None):
+    #     pass
+
+    # def partial_update(self, request, pk=None):
+    #     pass
+
+    # def destroy(self, request, pk=None):
+    #     pass
+    
 @api_view(['GET'])
 def credentials(request):
     credentials = Credential.objects.all()
