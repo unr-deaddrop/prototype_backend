@@ -4,6 +4,7 @@ import datetime
 from django.contrib.auth.models import User, Group
 from django.db import models
 from django.urls import reverse
+from django.conf import settings
 
 
 class Agent(models.Model):
@@ -61,7 +62,7 @@ class Task(models.Model):
     # What user and endpoint, if any, is this task associated with?
     # Theoretically, every task was caused by *someone*, even if it's
     # a periodic task
-    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="tasks")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="tasks")
     endpoint = models.ForeignKey(
         Endpoint, on_delete=models.PROTECT, related_name="tasks"
     )
