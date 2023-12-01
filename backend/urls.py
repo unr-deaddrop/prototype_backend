@@ -2,5 +2,6 @@ from django.urls import path
 from backend import views
 
 urlpatterns = [
-    path('/', views.agents)
+    # path('/', views.agents),
+    path('/', views.credentials),
 ]
