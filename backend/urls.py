@@ -5,4 +5,5 @@ urlpatterns = [
     path('/', views.credentials),
     # path('/', views.agents),
     path('/credentials', views.credentials), # rememeber that this is backend/credentials on the server
+    path('/addCredential', views.addCredential)
 ]

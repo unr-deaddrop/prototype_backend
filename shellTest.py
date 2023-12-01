@@ -10,3 +10,5 @@ print(Credential.objects.all())
 print(Credential.objects.all().delete())
 
 exit()
+
+{"credential_type":"test1", "credential_value":"test12", "expiry":null, "task":null}
