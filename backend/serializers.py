@@ -10,8 +10,8 @@ class AgentSerializer(serializers.ModelSerializer):
 class ProtocolSerializer(serializers.ModelSerializer):
     class Meta:
         model = Protocol
-        # fields = '__all__'
-        fields = ['name']
+        fields = '__all__'
+        # fields = ['name']
 
 class EndpointSerializer(serializers.ModelSerializer):
     class Meta:
