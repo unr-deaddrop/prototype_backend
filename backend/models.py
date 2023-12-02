@@ -17,6 +17,9 @@ class Agent(models.Model):
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])
+    
+    def __str__(self):
+        return self.name
 
 
 class Protocol(models.Model):
@@ -31,6 +34,9 @@ class Protocol(models.Model):
     def get_absolute_url(self):
         return reverse("protocol-detail", args=[str(self.id)])
 
+    def __str__(self):
+        return self.name
+    
 
 class Endpoint(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -59,6 +65,9 @@ class Endpoint(models.Model):
     def get_absolute_url(self):
         return reverse("endpoint-detail", args=[str(self.id)])
 
+    def __str__(self):
+        return self.name + ": " + self.hostname
+    
 
 class Task(models.Model):
     # What user and endpoint, if any, is this task associated with?
@@ -79,6 +88,9 @@ class Task(models.Model):
     def get_absolute_url(self):
         return reverse("task-detail", args=[str(self.id)])
 
+    def __str__(self):
+        return self.data # should be "{User} task"
+    
 
 class TaskResult(models.Model):
     # What task is this result associated with?
@@ -92,6 +104,9 @@ class TaskResult(models.Model):
     def get_absolute_url(self):
         return reverse("taskresult-detail", args=[str(self.id)])
 
+    def __str__(self):
+        return self.timestamp
+    
 
 class Credential(models.Model):
     # Task responsible for creating this credential entry, if any
@@ -116,6 +131,9 @@ class Credential(models.Model):
 
     def get_absolute_url(self):
         return reverse("credential-detail", args=[str(self.id)])
+    
+    def __str__(self):
+        return self.credential_type + ": " + self.credential_value
 
 
 class File(models.Model):
@@ -128,6 +146,9 @@ class File(models.Model):
 
     def get_absolute_url(self):
         return reverse("file-detail", args=[str(self.id)])
+    
+    def __str__(self):
+        return self.file # does this work?
 
 
 class Log(models.Model):
@@ -160,3 +181,6 @@ class Log(models.Model):
 
     def get_absolute_url(self):
         return reverse("log-detail", args=[str(self.id)])
+    
+    def __str__(self):
+        return self.category + " " + self.level + ": " + self.data
