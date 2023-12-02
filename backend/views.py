@@ -18,7 +18,7 @@ def signUp(request):
 
 from rest_framework import generics
 class SignUpView(generics.GenericAPIView):
-    serializers_class = SignUpSerializer
+    serializer_class = SignUpSerializer
     def post(self, request):
         data = request.data
         serializer = self.serializer_class(data=data)
@@ -30,6 +30,21 @@ class SignUpView(generics.GenericAPIView):
             }
             return Response(data=response, status=status.HTTP_201_CREATED)
         return Response(data=serializer.data, status=status.HTTP_400_BAD_REQUEST)
+    
+class SignUpViewSet(viewsets.ViewSet):
+    serializer_class = SignUpSerializer
+    def create(self, request):
+        data = request.data
+        serializer = self.serializer_class(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            response = {
+                "message": "User created",
+                "data": serializer.data
+            }
+            return Response(data=response, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
 
 # Agents
 class AgentViewSet(viewsets.ModelViewSet):
