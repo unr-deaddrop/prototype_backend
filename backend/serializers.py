@@ -7,14 +7,9 @@ class AgentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         # fields = ['name', 'definition_path']
 
-class CredentialSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Credential
-        fields = '__all__'
-
 class ProtocolSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Agent
+        model = Protocol
         fields = '__all__'
 
 class EndpointSerializer(serializers.ModelSerializer):
@@ -27,19 +22,20 @@ class TaskSerializer(serializers.ModelSerializer):
         model = Task
         fields = '__all__'
 
-
 class TaskResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskResult
         fields = '__all__'
 
-### Credential Serializer
+class CredentialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Credential
+        fields = '__all__'
 
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
         fields = '__all__'
-
 
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
