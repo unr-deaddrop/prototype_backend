@@ -14,6 +14,9 @@ class SignUpSerializer(serializers.ModelSerializer):
     #     if email_exists:
     #         raise ValidationErrror("Email already in use!")
     #     return super().validate(attrs)
+
+    def __str__(self):
+        return self.username
     
 
 class AgentSerializer(serializers.ModelSerializer):
