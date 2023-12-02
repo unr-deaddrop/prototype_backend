@@ -4,9 +4,14 @@ from rest_framework.decorators import api_view
 from rest_framework import status, permissions, viewsets
 from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credential, File, Log
 from backend.serializers import AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
+# from backend import models
+# from backend import serializers
 
 # Create your views here.
 # Agents
+class AgentViewSet(viewsets.ModelViewSet):
+    queryset = Agent.objects.all()
+    serializer_class = AgentSerializer
 @api_view(['GET'])
 def agents(request):
     agents = Agent.objects.all()
@@ -44,18 +49,18 @@ class CredentialViewSet(viewsets.ModelViewSet):
     # def destroy(self, request, pk=None):
     #     pass
     
-@api_view(['GET'])
-def credentials(request):
-    credentials = Credential.objects.all()
-    serializer = CredentialSerializer(credentials, many=True)
-    return Response(serializer.data)
+# @api_view(['GET'])
+# def credentials(request):
+#     credentials = Credential.objects.all()
+#     serializer = CredentialSerializer(credentials, many=True)
+#     return Response(serializer.data)
 
-@api_view(['POST'])
-def addCredential(request):
-    serializer = CredentialSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-    return Response(serializer.data)
+# @api_view(['POST'])
+# def addCredential(request):
+#     serializer = CredentialSerializer(data=request.data)
+#     if serializer.is_valid():
+#         serializer.save()
+#     return Response(serializer.data)
 
 # Protocols
 class ProtocolViewSet(viewsets.ModelViewSet):
@@ -69,36 +74,51 @@ class ProtocolViewSet(viewsets.ModelViewSet):
 #     return Response(serializer.data)
 
 # Endpoints
-@api_view(['GET'])
-def endpoints(request):
-    endpoints = Endpoint.objects.all()
-    serializer = EndpointSerializer(endpoints, many=True)
-    return Response(serializer.data)
+class EndpointViewSet(viewsets.ModelViewSet):
+    queryset = Endpoint.objects.all()
+    serializer_class = EndpointSerializer
+# @api_view(['GET'])
+# def endpoints(request):
+#     endpoints = Endpoint.objects.all()
+#     serializer = EndpointSerializer(endpoints, many=True)
+#     return Response(serializer.data)
 
 # tasks
-@api_view(['GET'])
-def tasks(request):
-    tasks = Task.objects.all()
-    serializer = TaskSerializer(tasks, many=True)
-    return Response(serializer.data)
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+# @api_view(['GET'])
+# def tasks(request):
+#     tasks = Task.objects.all()
+#     serializer = TaskSerializer(tasks, many=True)
+#     return Response(serializer.data)
 
 # TaskResults
-@api_view(['GET'])
-def taskResults(request):
-    taskResults = TaskResult.objects.all()
-    serializer = TaskResultSerializer(taskResults, many=True)
-    return Response(serializer.data)
+class TaskResultViewSet(viewsets.ModelViewSet):
+    queryset = TaskResult.objects.all()
+    serializer_class = TaskResultSerializer
+# @api_view(['GET'])
+# def taskResults(request):
+#     taskResults = TaskResult.objects.all()
+#     serializer = TaskResultSerializer(taskResults, many=True)
+#     return Response(serializer.data)
 
 # Files
-@api_view(['GET'])
-def files(request):
-    files = File.objects.all()
-    serializer = FileSerializer(files, many=True)
-    return Response(serializer.data)
+class FileViewSet(viewsets.ModelViewSet):
+    queryset = File.objects.all()
+    serializer_class = FileSerializer
+# @api_view(['GET'])
+# def files(request):
+#     files = File.objects.all()
+#     serializer = FileSerializer(files, many=True)
+#     return Response(serializer.data)
 
 # Logs
-@api_view(['GET'])
-def logs(request):
-    logs = Log.objects.all()
-    serializer = LogSerializer(logs, many=True)
-    return Response(serializer.data)
+class LogViewSet(viewsets.ModelViewSet):
+    queryset = Log.objects.all()
+    serializer_class = LogSerializer
+# @api_view(['GET'])
+# def logs(request):
+#     logs = Log.objects.all()
+#     serializer = LogSerializer(logs, many=True)
+#     return Response(serializer.data)
