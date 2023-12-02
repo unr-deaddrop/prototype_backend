@@ -23,7 +23,7 @@ def addAgent(request):
 # Credentials
 class CredentialViewSet(viewsets.ModelViewSet):
     queryset = Credential.objects.all()
-    serializer = CredentialSerializer
+    serializer_class = CredentialSerializer
     
     # def list(self, request):
     #     serializer = self.get_serializer(self.get_queryset(), many=True)
@@ -58,11 +58,15 @@ def addCredential(request):
     return Response(serializer.data)
 
 # Protocols
-@api_view(['GET'])
-def protocols(request):
-    protocols = Protocol.objects.all()
-    serializer = ProtocolSerializer(protocols, many=True)
-    return Response(serializer.data)
+class ProtocolViewSet(viewsets.ModelViewSet):
+    queryset = Protocol.objects.all()
+    serializer_class = ProtocolSerializer
+
+# @api_view(['GET'])
+# def protocols(request):
+#     protocols = Protocol.objects.all()
+#     serializer = ProtocolSerializer(protocols, many=True)
+#     return Response(serializer.data)
 
 # Endpoints
 @api_view(['GET'])
