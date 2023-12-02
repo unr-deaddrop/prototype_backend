@@ -4,13 +4,14 @@ from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credenti
 class AgentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agent
-        fields = '__all__'
-        # fields = ['name', 'definition_path']
+        # fields = '__all__'
+        fields = ['name']
 
 class ProtocolSerializer(serializers.ModelSerializer):
     class Meta:
         model = Protocol
-        fields = '__all__'
+        # fields = '__all__'
+        fields = ['name']
 
 class EndpointSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,6 +32,7 @@ class CredentialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Credential
         fields = '__all__'
+        # fields = ['id', 'credential_type']
 
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
