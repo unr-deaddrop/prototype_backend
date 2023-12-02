@@ -19,6 +19,8 @@ urlpatterns = [
     # path('/agents', views.agents),
     # path(r'^', include(router.urls)),
     path('/', include(router.urls)),
+    path('/signUp/', views.signUp),
+    path('/signUpGeneric/', views.SignUpView.as_view(), name='signupgeneric'),
     # path('/credentials', views.credentials), # rememeber that this is backend/credentials on the server
     # path('/addCredential/', views.addCredential),
     # path('/protocols', views.protocols),

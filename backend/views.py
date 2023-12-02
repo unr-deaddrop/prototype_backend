@@ -3,11 +3,34 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status, permissions, viewsets
 from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credential, File, Log
-from backend.serializers import AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
+from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
 # from backend import models
 # from backend import serializers
 
 # Create your views here.
+# Users
+@api_view(['POST'])
+def signUp(request):
+    serializer = SignUpSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+    return Response(serializer.data)
+
+from rest_framework import generics
+class SignUpView(generics.GenericAPIView):
+    serializers_class = SignUpSerializer
+    def post(self, request):
+        data = request.data
+        serializer = self.serializer_class(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            response = {
+                "message": "User created",
+                "data": serializer.data
+            }
+            return Response(data=response, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
 # Agents
 class AgentViewSet(viewsets.ModelViewSet):
     queryset = Agent.objects.all()
