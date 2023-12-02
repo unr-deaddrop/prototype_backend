@@ -4,8 +4,8 @@ from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credenti
 class AgentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agent
-        # fields = '__all__'
-        fields = ['name']
+        fields = '__all__'
+        # fields = ['name']
 
 class ProtocolSerializer(serializers.ModelSerializer):
     class Meta:
