@@ -11,7 +11,7 @@ shell:
 cshell:
 	python3 manage.py shell < shellTest.py
 
-first:
+dep:
 	pip3 install django django-rest-framework django-cors-headers 
 
 all:
