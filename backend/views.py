@@ -14,7 +14,7 @@ def signUp(request):
     serializer = SignUpSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-    return Response(serializer.data)
+    return Response(data=serializer.data)
 
 from rest_framework import generics
 class SignUpView(generics.GenericAPIView):
@@ -29,7 +29,7 @@ class SignUpView(generics.GenericAPIView):
                 "data": serializer.data
             }
             return Response(data=response, status=status.HTTP_201_CREATED)
-        return Response(data=serializer.data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class SignUpViewSet(viewsets.ViewSet):
     serializer_class = SignUpSerializer
