@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     
     "backend.apps.BackendConfig",
     "rest_framework",
+    "corsheaders",
     # "backend", # why does this not work? idk. think it's bc of the above
 ]
 
@@ -51,6 +52,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    'http://127.0.0.1:5173',
 ]
 
 ROOT_URLCONF = "deaddrop.urls"

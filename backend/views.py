@@ -2,6 +2,7 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status, permissions, viewsets
+from django.contrib.auth.models import User
 from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credential, File, Log
 from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
 # from backend import models
@@ -33,6 +34,11 @@ class SignUpView(generics.GenericAPIView):
     
 class SignUpViewSet(viewsets.ViewSet):
     serializer_class = SignUpSerializer
+    def list(self, request):
+        queryset = User.objects.all()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(data=serializer.data)
+    
     def create(self, request):
         data = request.data
         serializer = self.serializer_class(data=data)
