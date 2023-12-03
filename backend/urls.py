@@ -13,16 +13,15 @@ router.register(r'taskresults', views.TaskResultViewSet, basename='taskresults')
 router.register(r'credentials', views.CredentialViewSet, basename='credentials')
 router.register(r'files', views.FileViewSet, basename='files')
 router.register(r'logs', views.LogViewSet, basename='logs')
-
-router.register(r'signUpViewSet', views.SignUpViewSet, basename='signUpViewSet')
+router.register(r'signUp', views.SignUpViewSet, basename='signUp')
 
 urlpatterns = [
     # path('/', views.credentials),
     # path('/agents', views.agents),
     # path(r'^', include(router.urls)),
     path('/', include(router.urls)),
-    path('/signUp/', views.signUp),
-    path('/signUpGeneric/', views.SignUpView.as_view(), name='signupgeneric'),
+    # path('/signUp/', views.signUp),
+    # path('/signUpGeneric/', views.SignUpView.as_view(), name='signupgeneric'),
     # path('/credentials', views.credentials), # rememeber that this is backend/credentials on the server
     # path('/addCredential/', views.addCredential),
     # path('/protocols', views.protocols),

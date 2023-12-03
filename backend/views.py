@@ -10,27 +10,27 @@ from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSeria
 
 # Create your views here.
 # Users
-@api_view(['POST'])
-def signUp(request):
-    serializer = SignUpSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-    return Response(data=serializer.data)
+# @api_view(['POST'])
+# def signUp(request):
+#     serializer = SignUpSerializer(data=request.data)
+#     if serializer.is_valid():
+#         serializer.save()
+#     return Response(data=serializer.data)
 
-from rest_framework import generics
-class SignUpView(generics.GenericAPIView):
-    serializer_class = SignUpSerializer
-    def post(self, request):
-        data = request.data
-        serializer = self.serializer_class(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            response = {
-                "message": "User created",
-                "data": serializer.data
-            }
-            return Response(data=response, status=status.HTTP_201_CREATED)
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# from rest_framework import generics
+# class SignUpView(generics.GenericAPIView):
+#     serializer_class = SignUpSerializer
+#     def post(self, request):
+#         data = request.data
+#         serializer = self.serializer_class(data=data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             response = {
+#                 "message": "User created",
+#                 "data": serializer.data
+#             }
+#             return Response(data=response, status=status.HTTP_201_CREATED)
+#         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class SignUpViewSet(viewsets.ViewSet):
     serializer_class = SignUpSerializer
