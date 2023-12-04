@@ -25,6 +25,15 @@ class SignUpSerializer(serializers.ModelSerializer):
     def __str__(self):
         return self.username
     
+class LoginSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        # fields = '__all__'
+        fields = ['username', 'password']
+
+    def __str__(self):
+        return self.username
+    
 
 class AgentSerializer(serializers.ModelSerializer):
     class Meta:

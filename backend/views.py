@@ -1,12 +1,23 @@
 # from django.shortcuts import render
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework import status, permissions, viewsets
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import IsAuthenticated
+
+from django.middleware.csrf import get_token
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credential, File, Log
 from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
 # from backend import models
 # from backend import serializers
+
+# Auth
+def get_csrf(request):
+    response = JsonResponse({'detail': 'CSRF cookie set'})
+    response['X-CSRFToken'] = get_token(request)
+    return response
 
 # Create your views here.
 # Users
@@ -56,6 +67,8 @@ class SignUpViewSet(viewsets.ViewSet):
 class AgentViewSet(viewsets.ModelViewSet):
     queryset = Agent.objects.all()
     serializer_class = AgentSerializer
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
 @api_view(['GET'])
 def agents(request):
     agents = Agent.objects.all()
@@ -73,6 +86,8 @@ def addAgent(request):
 class CredentialViewSet(viewsets.ModelViewSet):
     queryset = Credential.objects.all()
     serializer_class = CredentialSerializer
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
     
     # def list(self, request):
     #     serializer = self.get_serializer(self.get_queryset(), many=True)

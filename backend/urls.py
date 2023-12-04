@@ -20,6 +20,7 @@ urlpatterns = [
     # path('/agents', views.agents),
     # path(r'^', include(router.urls)),
     path('/', include(router.urls)),
+    path('/api-auth/', include('rest_framework.urls')),
     # path('/signUp/', views.signUp),
     # path('/signUpGeneric/', views.SignUpView.as_view(), name='signupgeneric'),
     # path('/credentials', views.credentials), # rememeber that this is backend/credentials on the server
