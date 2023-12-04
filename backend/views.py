@@ -6,6 +6,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
+from backend.permissions import IsOwnerOrReadOnly
 from django.contrib.auth.models import User
 from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credential, File, Log
 from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
@@ -63,7 +64,7 @@ class AgentViewSet(viewsets.ModelViewSet):
     queryset = Agent.objects.all()
     serializer_class = AgentSerializer
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 @api_view(['GET'])
 def agents(request):
     agents = Agent.objects.all()
@@ -81,6 +82,8 @@ def addAgent(request):
 class CredentialViewSet(viewsets.ModelViewSet):
     queryset = Credential.objects.all()
     serializer_class = CredentialSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     
     # def list(self, request):
     #     serializer = self.get_serializer(self.get_queryset(), many=True)
@@ -118,6 +121,8 @@ class CredentialViewSet(viewsets.ModelViewSet):
 class ProtocolViewSet(viewsets.ModelViewSet):
     queryset = Protocol.objects.all()
     serializer_class = ProtocolSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
 # @api_view(['GET'])
 # def protocols(request):
@@ -129,6 +134,8 @@ class ProtocolViewSet(viewsets.ModelViewSet):
 class EndpointViewSet(viewsets.ModelViewSet):
     queryset = Endpoint.objects.all()
     serializer_class = EndpointSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 # @api_view(['GET'])
 # def endpoints(request):
 #     endpoints = Endpoint.objects.all()
@@ -139,6 +146,8 @@ class EndpointViewSet(viewsets.ModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 # @api_view(['GET'])
 # def tasks(request):
 #     tasks = Task.objects.all()
@@ -149,6 +158,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 class TaskResultViewSet(viewsets.ModelViewSet):
     queryset = TaskResult.objects.all()
     serializer_class = TaskResultSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 # @api_view(['GET'])
 # def taskResults(request):
 #     taskResults = TaskResult.objects.all()
@@ -159,6 +170,8 @@ class TaskResultViewSet(viewsets.ModelViewSet):
 class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects.all()
     serializer_class = FileSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 # @api_view(['GET'])
 # def files(request):
 #     files = File.objects.all()
@@ -169,6 +182,8 @@ class FileViewSet(viewsets.ModelViewSet):
 class LogViewSet(viewsets.ModelViewSet):
     queryset = Log.objects.all()
     serializer_class = LogSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 # @api_view(['GET'])
 # def logs(request):
 #     logs = Log.objects.all()
