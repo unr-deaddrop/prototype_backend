@@ -1,8 +1,7 @@
 from django.urls import path, include
 from backend import views
-# from backend.views import *
-# from backend.views import CredentialViewSet
 from rest_framework import routers
+from rest_framework.authtoken.views import obtain_auth_token
 
 router = routers.DefaultRouter()
 router.register(r'agents', views.AgentViewSet, basename='agents')
@@ -20,6 +19,7 @@ urlpatterns = [
     # path('/agents', views.agents),
     # path(r'^', include(router.urls)),
     path('/', include(router.urls)),
+    path('/get_token/', obtain_auth_token, name='login'),
     # path('/signUp/', views.signUp),
     # path('/signUpGeneric/', views.SignUpView.as_view(), name='signupgeneric'),
     # path('/credentials', views.credentials), # rememeber that this is backend/credentials on the server

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     
     "backend.apps.BackendConfig",
     "rest_framework",
+    "rest_framework.authtoken",
     "corsheaders",
     # "backend", # why does this not work? idk. think it's bc of the above
 ]
@@ -64,6 +65,12 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
 
 ROOT_URLCONF = "deaddrop.urls"
 
