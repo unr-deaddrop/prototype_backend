@@ -12,7 +12,7 @@ cshell:
 	python3 manage.py shell < shellTest.py
 
 dep:
-	pip3 install django django-rest-framework django-cors-headers 
+	pip3 install -r requirements.txt 
 
 all:
 	make migrate run
