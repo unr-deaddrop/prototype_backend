@@ -1,5 +1,7 @@
 # Functional
 django
+django-rest-framework
+django-cors-headers
 
 # Linting
 black
