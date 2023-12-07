@@ -44,6 +44,10 @@ class EndpointSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TaskSerializer(serializers.ModelSerializer):
+    # intercept
+    # import dddb
+    # function that takes a string/bytes obj
+    # print string in term or smth
     class Meta:
         model = Task
         fields = '__all__'
@@ -54,6 +58,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CredentialSerializer(serializers.ModelSerializer):
+    credential_value = serializers.JSONField()
     class Meta:
         model = Credential
         fields = '__all__'
