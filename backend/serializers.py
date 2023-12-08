@@ -44,6 +44,7 @@ class EndpointSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TaskSerializer(serializers.ModelSerializer):
+    data = serializers.JSONField()
     # intercept
     # import dddb
     # function that takes a string/bytes obj

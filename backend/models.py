@@ -12,7 +12,6 @@ class Agent(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the agent."
     )
     # Local path to agent definition root
-    definition_path = models.FilePathField(allow_folders=True, allow_files=True)
     definition_path = models.FileField(upload_to=None, max_length=100)
 
     def get_absolute_url(self):
@@ -28,7 +27,6 @@ class Protocol(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the protocol."
     )
     # Local path to protocol handler binary (may make sense as a FileField?)
-    handler_path = models.FilePathField(allow_folders=True, allow_files=True)
     handler_path = models.FileField(upload_to=None, max_length=100)
 
     def get_absolute_url(self):
@@ -73,9 +71,10 @@ class Task(models.Model):
     # What user and endpoint, if any, is this task associated with?
     # Theoretically, every task was caused by *someone*, even if it's
     # a periodic task
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="tasks")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="tasks", blank=True, null=True)
     endpoint = models.ForeignKey(
-        Endpoint, on_delete=models.PROTECT, related_name="tasks"
+        Endpoint, on_delete=models.PROTECT, related_name="tasks",
+        blank=True, null=True
     )
     # When was this task started/finished?
     start_time = models.DateTimeField()
