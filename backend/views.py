@@ -78,8 +78,8 @@ class CredentialViewSet(viewsets.ModelViewSet):
     #     serializer = self.get_serializer(self.get_queryset(), many=True)
     #     return self.get_paginated_response(self.paginate_queryset(serializer.data))
 
-    # def create(self, request):
-    #     pass
+    # def create(self, *args, **kwargs):
+    #     return super().create(*args, **kwargs)
 
     # def retrieve(self, request, pk=None):
     #     pass
@@ -111,51 +111,29 @@ class ProtocolViewSet(viewsets.ModelViewSet):
     queryset = Protocol.objects.all()
     serializer_class = ProtocolSerializer
 
-# @api_view(['GET'])
-# def protocols(request):
-#     protocols = Protocol.objects.all()
-#     serializer = ProtocolSerializer(protocols, many=True)
-#     return Response(serializer.data)
-
 # Endpoints
 class EndpointViewSet(viewsets.ModelViewSet):
     queryset = Endpoint.objects.all()
     serializer_class = EndpointSerializer
-# @api_view(['GET'])
-# def endpoints(request):
-#     endpoints = Endpoint.objects.all()
-#     serializer = EndpointSerializer(endpoints, many=True)
-#     return Response(serializer.data)
 
 # tasks
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-# @api_view(['GET'])
-# def tasks(request):
-#     tasks = Task.objects.all()
-#     serializer = TaskSerializer(tasks, many=True)
-#     return Response(serializer.data)
+    def create(self, request, *args, **kwargs):
+        print('all:', request.data)
+        print('\nform data:', request.data['data'])
+        return super().create(request, *args, **kwargs)
 
 # TaskResults
 class TaskResultViewSet(viewsets.ModelViewSet):
     queryset = TaskResult.objects.all()
     serializer_class = TaskResultSerializer
-# @api_view(['GET'])
-# def taskResults(request):
-#     taskResults = TaskResult.objects.all()
-#     serializer = TaskResultSerializer(taskResults, many=True)
-#     return Response(serializer.data)
 
 # Files
 class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects.all()
     serializer_class = FileSerializer
-# @api_view(['GET'])
-# def files(request):
-#     files = File.objects.all()
-#     serializer = FileSerializer(files, many=True)
-#     return Response(serializer.data)
 
 # Logs
 class LogViewSet(viewsets.ModelViewSet):
