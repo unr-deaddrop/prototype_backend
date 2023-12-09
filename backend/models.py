@@ -4,6 +4,7 @@ import datetime
 from django.contrib.auth.models import User, Group
 from django.db import models
 from django.urls import reverse
+from django.conf import settings
 
 
 class Agent(models.Model):
@@ -11,10 +12,13 @@ class Agent(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the agent."
     )
     # Local path to agent definition root
-    definition_path = models.FilePathField()
+    definition_path = models.FileField(upload_to=None, max_length=100)
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])
+    
+    def __str__(self):
+        return self.name
 
 
 class Protocol(models.Model):
@@ -23,11 +27,14 @@ class Protocol(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the protocol."
     )
     # Local path to protocol handler binary (may make sense as a FileField?)
-    handler_path = models.FilePathField()
+    handler_path = models.FileField(upload_to=None, max_length=100)
 
     def get_absolute_url(self):
         return reverse("protocol-detail", args=[str(self.id)])
 
+    def __str__(self):
+        return self.name
+    
 
 class Endpoint(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -56,14 +63,18 @@ class Endpoint(models.Model):
     def get_absolute_url(self):
         return reverse("endpoint-detail", args=[str(self.id)])
 
+    def __str__(self):
+        return self.name + ": " + self.hostname
+    
 
 class Task(models.Model):
     # What user and endpoint, if any, is this task associated with?
     # Theoretically, every task was caused by *someone*, even if it's
     # a periodic task
-    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="tasks")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="tasks", blank=True, null=True)
     endpoint = models.ForeignKey(
-        Endpoint, on_delete=models.PROTECT, related_name="tasks"
+        Endpoint, on_delete=models.PROTECT, related_name="tasks",
+        blank=True, null=True
     )
     # When was this task started/finished?
     start_time = models.DateTimeField()
@@ -76,6 +87,9 @@ class Task(models.Model):
     def get_absolute_url(self):
         return reverse("task-detail", args=[str(self.id)])
 
+    def __str__(self):
+        return self.data # should be "{User} task"
+    
 
 class TaskResult(models.Model):
     # What task is this result associated with?
@@ -89,6 +103,9 @@ class TaskResult(models.Model):
     def get_absolute_url(self):
         return reverse("taskresult-detail", args=[str(self.id)])
 
+    def __str__(self):
+        return self.timestamp
+    
 
 class Credential(models.Model):
     # Task responsible for creating this credential entry, if any
@@ -113,6 +130,9 @@ class Credential(models.Model):
 
     def get_absolute_url(self):
         return reverse("credential-detail", args=[str(self.id)])
+    
+    def __str__(self):
+        return self.credential_type + ": " + self.credential_value
 
 
 class File(models.Model):
@@ -125,6 +145,9 @@ class File(models.Model):
 
     def get_absolute_url(self):
         return reverse("file-detail", args=[str(self.id)])
+    
+    def __str__(self):
+        return self.file # does this work?
 
 
 class Log(models.Model):
@@ -157,3 +180,6 @@ class Log(models.Model):
 
     def get_absolute_url(self):
         return reverse("log-detail", args=[str(self.id)])
+    
+    def __str__(self):
+        return self.category + " " + self.level + ": " + self.data
