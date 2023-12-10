@@ -8,6 +8,14 @@ from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSeria
 # from backend import models
 # from backend import serializers
 
+# FIXME: #3
+from datetime import datetime
+from pathlib import Path
+import tempfile
+import uuid
+import json
+import dddb
+
 # Create your views here.
 # Users
 # @api_view(['POST'])
@@ -116,11 +124,61 @@ class EndpointViewSet(viewsets.ModelViewSet):
     queryset = Endpoint.objects.all()
     serializer_class = EndpointSerializer
 
+def create_msg(request) -> None:
+    """
+    Create local dddb message from request.
+    """
+
+    # To be used in case remote stuff just... doesn't work
+    # note this assumes it's being run from the root of prototype_backend
+    # (e.g. with `make`), and it's in a folder with prototype_agent available
+    # as well
+    #
+    # Obviously, this should go elsewhere (e.g. settings.py) but this is just
+    # for the demo
+    DECODED_DIR = Path("../prototype_agent/msgs/decoded")
+    ENCODED_DIR = Path("../prototype_agent/msgs/raw")
+    
+    # If the 'data' key is missing, or 'data' is null, or 'args' is missing,
+    if ('data' not in request.data) or (not request.data['data']) or ('args' not in request.data['data']) or (not request.data['data']['args']):
+        print("Command request missing required component, defaulting message")
+        cmd_str = "(failing message) nice try!"
+    else:
+        cmd_str = f"command:{request.data['data']['args']}"
+    
+    msg_id = str(uuid.uuid4())
+    # Construct JSON message 
+    full_msg = {
+        "msg_id": msg_id,
+        "message_type": "command_request",
+        "initiated_by": "server",
+        "timestamp": datetime.utcnow().timestamp(),
+        "data": cmd_str # no base64 encoding going out
+    }
+    
+    # Create temporary directory for plaintext message
+    decoded_out = (DECODED_DIR/Path(msg_id+"_server").with_suffix(".data")).resolve()
+    encoded_out = (ENCODED_DIR/Path(msg_id).with_suffix(".mp4")).resolve()
+    
+    print(f"Writing video to {encoded_out=} (from {decoded_out=}) ")
+    
+    with open(decoded_out, "w+") as fp:
+        json.dump(full_msg, fp)
+        
+    # Because this gets handed off, we can't delete either decoded_out or encoded_out;
+    # the best we can do is try and avoid the name collision
+    dddb.video.encode({'in_path': str(decoded_out), 'out_path': str(encoded_out)})
+
+
 # tasks
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     def create(self, request, *args, **kwargs):
+
+        # TODO: make this a fully asynchronous task
+        create_msg(request)
+        
         print('all:', request.data)
         print('\nform data:', request.data['data'])
         return super().create(request, *args, **kwargs)
