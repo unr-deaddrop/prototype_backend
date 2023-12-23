@@ -39,11 +39,14 @@ class ProtocolSerializer(serializers.ModelSerializer):
         # fields = ['name']
 
 class EndpointSerializer(serializers.ModelSerializer):
+    agent = AgentSerializer()
+    protocols = ProtocolSerializer(many=True)
     class Meta:
         model = Endpoint
         fields = '__all__'
 
 class TaskSerializer(serializers.ModelSerializer):
+    endpoint = EndpointSerializer()
     data = serializers.JSONField()
     # intercept
     # import dddb
@@ -54,11 +57,13 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TaskResultSerializer(serializers.ModelSerializer):
+    task = TaskSerializer()
     class Meta:
         model = TaskResult
         fields = '__all__'
 
 class CredentialSerializer(serializers.ModelSerializer):
+    task = TaskSerializer()
     credential_value = serializers.JSONField()
     class Meta:
         model = Credential
@@ -66,11 +71,15 @@ class CredentialSerializer(serializers.ModelSerializer):
         # fields = ['id', 'credential_type']
 
 class FileSerializer(serializers.ModelSerializer):
+    task = TaskSerializer()
     class Meta:
         model = File
         fields = '__all__'
 
 class LogSerializer(serializers.ModelSerializer):
+    source = EndpointSerializer()
+    task = TaskSerializer()
+    task_result = TaskResultSerializer()
     class Meta:
         model = Log
         fields = '__all__'

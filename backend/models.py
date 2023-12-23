@@ -57,6 +57,7 @@ class Endpoint(models.Model):
     # Additional JSON configuration object
     agent_cfg = models.JSONField(blank=True, null=True)
     # What other endpoints does this endpoint have direct access to?
+    # this may be wrong according to https://stackoverflow.com/questions/39821723/django-rest-framework-many-to-many-field-related-to-itself
     upstream_connections = models.ManyToManyField("self")
     downstream_connections = models.ManyToManyField("self")
 
@@ -158,7 +159,7 @@ class Log(models.Model):
     )
     # Is the log tied to a user?
     user = models.ForeignKey(
-        User, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
+        settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
     )
     # Is the log tied to a specific task?
     task = models.ForeignKey(
