@@ -14,6 +14,9 @@ cshell:
 fake:
 	python3 manage.py migrate --fake backend
 
+flush:
+	python3 manage.py flush
+
 dep:
 	pip3 install -r requirements.txt 
 
