@@ -58,8 +58,7 @@ class Endpoint(models.Model):
     agent_cfg = models.JSONField(blank=True, null=True)
     # What other endpoints does this endpoint have direct access to?
     # this may be wrong according to https://stackoverflow.com/questions/39821723/django-rest-framework-many-to-many-field-related-to-itself
-    upstream_connections = models.ManyToManyField("self")
-    downstream_connections = models.ManyToManyField("self")
+    connections = models.ManyToManyField("self", blank=True, null=True)
 
     def get_absolute_url(self):
         return reverse("endpoint-detail", args=[str(self.id)])

@@ -41,8 +41,12 @@ INSTALLED_APPS = [
     "backend.apps.BackendConfig",
     "rest_framework",
     "corsheaders",
-    # "backend", # why does this not work? idk. think it's bc of the above
+    "django_filters",
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['backend.filters.AllDjangoFilterBackend']
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

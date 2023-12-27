@@ -112,9 +112,12 @@ class ProtocolViewSet(viewsets.ModelViewSet):
     serializer_class = ProtocolSerializer
 
 # Endpoints
+from django_filters.rest_framework import DjangoFilterBackend
 class EndpointViewSet(viewsets.ModelViewSet):
     queryset = Endpoint.objects.all()
     serializer_class = EndpointSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'name', 'hostname', 'address', 'is_virtual', 'agent', 'protocols', 'encryption_key', 'hmac_key', 'connections']
 
 # tasks
 class TaskViewSet(viewsets.ModelViewSet):

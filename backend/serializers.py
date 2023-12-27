@@ -39,25 +39,21 @@ class ProtocolSerializer(serializers.ModelSerializer):
         # fields = ['name']
 
 class EndpointSerializer(serializers.ModelSerializer):
-    # agent = AgentSerializer()
-    # protocols = ProtocolSerializer(many=True)
+    agent = AgentSerializer()
+    protocols = ProtocolSerializer(many=True)
     class Meta:
         model = Endpoint
         fields = '__all__'
 
 class TaskSerializer(serializers.ModelSerializer):
-    # endpoint = EndpointSerializer()
+    endpoint = EndpointSerializer()
     data = serializers.JSONField()
-    # intercept
-    # import dddb
-    # function that takes a string/bytes obj
-    # print string in term or smth
     class Meta:
         model = Task
         fields = '__all__'
 
 class TaskResultSerializer(serializers.ModelSerializer):
-    task = TaskSerializer(read_only=True)
+    # task = TaskSerializer(read_only=True) # taskresult should not be able to make tasks
     class Meta:
         model = TaskResult
         fields = '__all__'

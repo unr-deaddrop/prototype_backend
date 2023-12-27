@@ -38,7 +38,7 @@ view OPEN CALLBACKS >
     what the fuck is this
 
 view ALL TASKS >
-    grab endpoint, user, time_stamp
+    show endpoint, user, time_stamp
 
 
 
@@ -46,8 +46,8 @@ view ALL TASKS >
 form
 generate payload ENDPOINT > 
     makes agent
-    associates encryption and hmac key w endpoint
-    links many protocols to endpoint
+    associates encryption and hmac key w endpoint (reg POST)
+    links many protocols to endpoint (checkboxes)
 
 view associated TASKS w ENDPOINT >
     show tasks w filter on endpoint
@@ -56,7 +56,7 @@ view associated LOGS w ENDPOINT >
     show logs w filter on endpoint
 
 show ENDPOINTS > 
-    grab name, hostname, addres, date
+    show name, hostname, addres, date
 
 show ENDPOINT graph >
     what the fuck is this
@@ -74,6 +74,16 @@ show AGENTS >
     show agents list
         > show name, os, protocol, endpoint count
             endpoint count > count endpoints with filter agents 
+
+create payload ENDPOINT from AGENT >
+    make endpoint prefilled with agent
+    # temporarily just link to endpoint page
+
+show command list >
+    no way to do this from backend unless destructuring the file or smth
+
+show related ENDPOINTS >
+    filter endpoints using agent pk
 
 
 ### PROTOCOL

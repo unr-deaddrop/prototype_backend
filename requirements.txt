@@ -2,6 +2,7 @@
 django 
 django-rest-framework 
 django-cors-headers
+django-filter
 
 # Linting
 black
