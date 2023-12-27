@@ -60,7 +60,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
 
 class CredentialSerializer(serializers.ModelSerializer):
     # task = TaskSerializer()
-    credential_value = serializers.JSONField()
+    # credential_value = serializers.JSONField()
     class Meta:
         model = Credential
         fields = '__all__'
