@@ -2,7 +2,10 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status, permissions, viewsets
+
+from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
+
 from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credential, File, Log
 from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
 # from backend import models
@@ -112,7 +115,6 @@ class ProtocolViewSet(viewsets.ModelViewSet):
     serializer_class = ProtocolSerializer
 
 # Endpoints
-from django_filters.rest_framework import DjangoFilterBackend
 class EndpointViewSet(viewsets.ModelViewSet):
     queryset = Endpoint.objects.all()
     serializer_class = EndpointSerializer
