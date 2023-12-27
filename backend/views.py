@@ -59,6 +59,8 @@ class SignUpViewSet(viewsets.ViewSet):
 class AgentViewSet(viewsets.ModelViewSet):
     queryset = Agent.objects.all()
     serializer_class = AgentSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'name']
 @api_view(['GET'])
 def agents(request):
     agents = Agent.objects.all()
@@ -113,6 +115,8 @@ class CredentialViewSet(viewsets.ModelViewSet):
 class ProtocolViewSet(viewsets.ModelViewSet):
     queryset = Protocol.objects.all()
     serializer_class = ProtocolSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'name',]
 
 # Endpoints
 class EndpointViewSet(viewsets.ModelViewSet):
@@ -134,11 +138,15 @@ class TaskViewSet(viewsets.ModelViewSet):
 class TaskResultViewSet(viewsets.ModelViewSet):
     queryset = TaskResult.objects.all()
     serializer_class = TaskResultSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'task', 'timestamp',]
 
 # Files
 class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects.all()
     serializer_class = FileSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'task',]
 
 # Logs
 class LogViewSet(viewsets.ModelViewSet):
