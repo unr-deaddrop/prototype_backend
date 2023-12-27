@@ -39,14 +39,14 @@ class ProtocolSerializer(serializers.ModelSerializer):
         # fields = ['name']
 
 class EndpointSerializer(serializers.ModelSerializer):
-    agent = AgentSerializer()
-    protocols = ProtocolSerializer(many=True)
+    # agent = AgentSerializer()
+    # protocols = ProtocolSerializer(many=True)
     class Meta:
         model = Endpoint
         fields = '__all__'
 
 class TaskSerializer(serializers.ModelSerializer):
-    endpoint = EndpointSerializer()
+    # endpoint = EndpointSerializer()
     data = serializers.JSONField()
     class Meta:
         model = Task
