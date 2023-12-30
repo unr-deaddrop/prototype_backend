@@ -160,11 +160,11 @@ class Log(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
     )
-    # # Removed this to reduce complexity as task_result already is linked to a task
-    # # Is the log tied to a specific task?
-    # task = models.ForeignKey(
-    #     Task, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
-    # )
+    # Removed this to reduce complexity as task_result already is linked to a task
+    # Is the log tied to a specific task?
+    task = models.ForeignKey(
+        Task, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
+    )
     # Is the log tied to a single task result object?
     task_result = models.ForeignKey(
         TaskResult, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
