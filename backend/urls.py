@@ -32,4 +32,4 @@ urlpatterns = [
     # path('/taskresults', views.credentials),
     # path('/files', views.files),
     # path('/logs', views.logs),
-]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
