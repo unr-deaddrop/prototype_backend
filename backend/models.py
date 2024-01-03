@@ -12,7 +12,7 @@ class Agent(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the agent."
     )
     # Local path to agent definition root
-    definition_path = models.FileField(upload_to="files/agents")
+    definition_path = models.FileField(upload_to="agents")
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])
@@ -27,7 +27,7 @@ class Protocol(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the protocol."
     )
     # Local path to protocol handler binary (may make sense as a FileField?)
-    handler_path = models.FileField(upload_to="files/protocols")
+    handler_path = models.FileField(upload_to="protocols")
 
     def get_absolute_url(self):
         return reverse("protocol-detail", args=[str(self.id)])
@@ -57,7 +57,7 @@ class Endpoint(models.Model):
     # Additional JSON configuration object
     agent_cfg = models.JSONField(blank=True, null=True)
     # What other endpoints does this endpoint have direct access to?
-    # this may be wrong according to https://stackoverflow.com/questions/39821723/django-rest-framework-many-to-many-field-related-to-itself
+    # FIXME: this may be wrong according to https://stackoverflow.com/questions/39821723/django-rest-framework-many-to-many-field-related-to-itself
     connections = models.ManyToManyField("self", blank=True, null=True)
 
     def get_absolute_url(self):
@@ -141,7 +141,7 @@ class File(models.Model):
         Task, on_delete=models.PROTECT, blank=True, null=True, related_name="files"
     )
     # Path to file; location to be determined
-    file = models.FileField(upload_to="files/files")
+    file = models.FileField(upload_to="files")
 
     def get_absolute_url(self):
         return reverse("file-detail", args=[str(self.id)])

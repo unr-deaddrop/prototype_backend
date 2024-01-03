@@ -1,4 +1,6 @@
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from backend import views
 # from backend.views import *
 # from backend.views import CredentialViewSet
@@ -30,4 +32,4 @@ urlpatterns = [
     # path('/taskresults', views.credentials),
     # path('/files', views.files),
     # path('/logs', views.logs),
-]
+]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
