@@ -12,7 +12,7 @@ class Agent(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the agent."
     )
     # Local path to agent definition root
-    definition_path = models.FileField(upload_to="files/agents", max_length=100)
+    definition_path = models.FileField(upload_to="files/agents")
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])
@@ -27,7 +27,7 @@ class Protocol(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the protocol."
     )
     # Local path to protocol handler binary (may make sense as a FileField?)
-    handler_path = models.FileField(upload_to="files/protocols", max_length=100)
+    handler_path = models.FileField(upload_to="files/protocols")
 
     def get_absolute_url(self):
         return reverse("protocol-detail", args=[str(self.id)])
