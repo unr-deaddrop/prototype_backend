@@ -12,7 +12,7 @@ class Agent(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the agent."
     )
     # Local path to agent definition root
-    definition_path = models.FileField(upload_to=None, max_length=100)
+    definition_path = models.FileField(upload_to="agents")
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])
@@ -27,7 +27,7 @@ class Protocol(models.Model):
         max_length=100, unique=True, help_text="Human-readable name for the protocol."
     )
     # Local path to protocol handler binary (may make sense as a FileField?)
-    handler_path = models.FileField(upload_to=None, max_length=100)
+    handler_path = models.FileField(upload_to="protocols")
 
     def get_absolute_url(self):
         return reverse("protocol-detail", args=[str(self.id)])
@@ -57,8 +57,8 @@ class Endpoint(models.Model):
     # Additional JSON configuration object
     agent_cfg = models.JSONField(blank=True, null=True)
     # What other endpoints does this endpoint have direct access to?
-    upstream_connections = models.ManyToManyField("self")
-    downstream_connections = models.ManyToManyField("self")
+    # FIXME: this may be wrong according to https://stackoverflow.com/questions/39821723/django-rest-framework-many-to-many-field-related-to-itself
+    connections = models.ManyToManyField("self", blank=True, null=True)
 
     def get_absolute_url(self):
         return reverse("endpoint-detail", args=[str(self.id)])
@@ -103,8 +103,8 @@ class TaskResult(models.Model):
     def get_absolute_url(self):
         return reverse("taskresult-detail", args=[str(self.id)])
 
-    def __str__(self):
-        return self.timestamp
+    # def __str__(self):
+    #     return self.timestamp # this doesn't work and causes log to bug
     
 
 class Credential(models.Model):
@@ -141,7 +141,7 @@ class File(models.Model):
         Task, on_delete=models.PROTECT, blank=True, null=True, related_name="files"
     )
     # Path to file; location to be determined
-    file = models.FileField()
+    file = models.FileField(upload_to="files")
 
     def get_absolute_url(self):
         return reverse("file-detail", args=[str(self.id)])
@@ -158,8 +158,9 @@ class Log(models.Model):
     )
     # Is the log tied to a user?
     user = models.ForeignKey(
-        User, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
+        settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
     )
+    # Removed this to reduce complexity as task_result already is linked to a task
     # Is the log tied to a specific task?
     task = models.ForeignKey(
         Task, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
@@ -182,4 +183,4 @@ class Log(models.Model):
         return reverse("log-detail", args=[str(self.id)])
     
     def __str__(self):
-        return self.category + " " + self.level + ": " + self.data
+        return str(self.data)

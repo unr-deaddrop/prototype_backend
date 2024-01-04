@@ -2,7 +2,10 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status, permissions, viewsets
+
+from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
+
 from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credential, File, Log
 from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
 # from backend import models
@@ -56,6 +59,8 @@ class SignUpViewSet(viewsets.ViewSet):
 class AgentViewSet(viewsets.ModelViewSet):
     queryset = Agent.objects.all()
     serializer_class = AgentSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'name']
 @api_view(['GET'])
 def agents(request):
     agents = Agent.objects.all()
@@ -110,11 +115,15 @@ class CredentialViewSet(viewsets.ModelViewSet):
 class ProtocolViewSet(viewsets.ModelViewSet):
     queryset = Protocol.objects.all()
     serializer_class = ProtocolSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'name',]
 
 # Endpoints
 class EndpointViewSet(viewsets.ModelViewSet):
     queryset = Endpoint.objects.all()
     serializer_class = EndpointSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'name', 'hostname', 'address', 'is_virtual', 'agent', 'protocols', 'encryption_key', 'hmac_key', 'connections']
 
 # tasks
 class TaskViewSet(viewsets.ModelViewSet):
@@ -129,11 +138,15 @@ class TaskViewSet(viewsets.ModelViewSet):
 class TaskResultViewSet(viewsets.ModelViewSet):
     queryset = TaskResult.objects.all()
     serializer_class = TaskResultSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'task', 'timestamp',]
 
 # Files
 class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects.all()
     serializer_class = FileSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['id', 'task',]
 
 # Logs
 class LogViewSet(viewsets.ModelViewSet):

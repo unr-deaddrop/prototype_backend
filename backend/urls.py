@@ -1,4 +1,6 @@
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from backend import views
 # from backend.views import *
 # from backend.views import CredentialViewSet

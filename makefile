@@ -14,6 +14,17 @@ cshell:
 fake:
 	python3 manage.py migrate --fake backend
 
+flush:
+	python3 manage.py flush
+
+purge:
+	make flush
+	rm db.sqlite3
+	make migrate
+
+admin:
+	python3 manage.py createsuperuser
+
 dep:
 	pip3 install -r requirements.txt 
 

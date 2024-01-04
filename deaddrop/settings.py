@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') # Here
+MEDIA_URL = '/media/'
 
 
 # Quick-start development settings - unsuitable for production
@@ -41,8 +44,12 @@ INSTALLED_APPS = [
     "backend.apps.BackendConfig",
     "rest_framework",
     "corsheaders",
-    # "backend", # why does this not work? idk. think it's bc of the above
+    "django_filters",
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['backend.filters.AllDjangoFilterBackend']
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -61,6 +68,7 @@ MIDDLEWARE = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173', # svelte origin
 ]

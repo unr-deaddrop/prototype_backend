@@ -39,38 +39,43 @@ class ProtocolSerializer(serializers.ModelSerializer):
         # fields = ['name']
 
 class EndpointSerializer(serializers.ModelSerializer):
+    # agent = AgentSerializer()
+    # protocols = ProtocolSerializer(many=True)
     class Meta:
         model = Endpoint
         fields = '__all__'
 
 class TaskSerializer(serializers.ModelSerializer):
+    # endpoint = EndpointSerializer()
     data = serializers.JSONField()
-    # intercept
-    # import dddb
-    # function that takes a string/bytes obj
-    # print string in term or smth
     class Meta:
         model = Task
         fields = '__all__'
 
 class TaskResultSerializer(serializers.ModelSerializer):
+    # task = TaskSerializer(read_only=True) # taskresult should not be able to make tasks
     class Meta:
         model = TaskResult
         fields = '__all__'
 
 class CredentialSerializer(serializers.ModelSerializer):
-    credential_value = serializers.JSONField()
+    # task = TaskSerializer()
+    # credential_value = serializers.JSONField()
     class Meta:
         model = Credential
         fields = '__all__'
         # fields = ['id', 'credential_type']
 
 class FileSerializer(serializers.ModelSerializer):
+    # task = TaskSerializer()
     class Meta:
         model = File
         fields = '__all__'
 
 class LogSerializer(serializers.ModelSerializer):
+    # source = EndpointSerializer()
+    # task = TaskSerializer()
+    # task_result = TaskResultSerializer()
     class Meta:
         model = Log
         fields = '__all__'
