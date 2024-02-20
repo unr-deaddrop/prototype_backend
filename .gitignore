@@ -1,4 +1,6 @@
+# equal to django settings.py MEDIA_ROOT
 media/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
