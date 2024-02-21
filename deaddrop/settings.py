@@ -43,12 +43,21 @@ INSTALLED_APPS = [
     
     "backend.apps.BackendConfig",
     "rest_framework",
+    "rest_framework.authtoken",
     "corsheaders",
     "django_filters",
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_FILTER_BACKENDS': ['backend.filters.AllDjangoFilterBackend']
+    'DEFAULT_FILTER_BACKENDS': [
+        'backend.filters.AllDjangoFilterBackend'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
 }
 
 MIDDLEWARE = [

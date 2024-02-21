@@ -2,6 +2,9 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status, permissions, viewsets
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
@@ -46,9 +49,11 @@ class SignUpViewSet(viewsets.ViewSet):
         data = request.data
         serializer = self.serializer_class(data=data)
         if serializer.is_valid():
-            serializer.save()
+            account = serializer.save()
+            token = Token.objects.get(user=account).key
             response = {
                 "message": "User created",
+                "token": token,
                 "data": serializer.data
             }
             return Response(data=response, status=status.HTTP_201_CREATED)
