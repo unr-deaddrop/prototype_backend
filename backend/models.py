@@ -10,7 +10,13 @@ from django.conf import settings
 
 class Agent(models.Model):
     name = models.CharField(
-        max_length=100, unique=True, help_text="Human-readable name for the agent."
+        max_length=100, help_text="Human-readable name for the agent."
+    )
+    # Store the version of the agent along with the name. Different versions
+    # of the same agent may not be backwards compatible, so it's necessary
+    # to store definitions for each (even if their names are the same).
+    version = models.CharField(
+        max_length=100, help_text="The version for this agent."
     )
     # Path to the original agent package file. It may be the case that the user
     # wants to distribute the package itself, which is preferred over re-zipping
