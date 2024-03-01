@@ -1,3 +1,4 @@
+from typing import Any
 import uuid
 import datetime
 
@@ -33,6 +34,28 @@ class Agent(models.Model):
             " have been unpackaged, with metadata generated."
         ),
     )
+
+    # Various helper commands to get the relevant metadata for this agent. 
+    # Right now, these are just loosely-structured JSON and Python dictionaries;
+    # in the future, deaddrop_meta will allow us to validate the metadata and
+    # return an actual object with attributes.
+    def get_commands(self) -> dict[str, Any]:
+        raise NotImplementedError
+
+    def get_commands_json(self):
+        raise NotImplementedError
+    
+    def get_supported_protocols(self) -> dict[str, Any]:
+        raise NotImplementedError
+    
+    def get_supported_protocols_json(self) -> str:
+        raise NotImplementedError
+    
+    def get_agent_metadata(self) -> dict[str, Any]:
+        raise NotImplementedError
+    
+    def get_agent_metadata_json(self) -> str:
+        raise NotImplementedError
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])
