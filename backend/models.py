@@ -40,6 +40,10 @@ class Agent(models.Model):
             " have been unpackaged, with metadata generated."
         ),
     )
+    
+    class Meta:
+        # No two agents may have the same name and version.
+        unique_together = ('name', 'version',)
 
     # Various helper commands to get the relevant metadata for this agent. 
     # Right now, these are just loosely-structured JSON and Python dictionaries;
