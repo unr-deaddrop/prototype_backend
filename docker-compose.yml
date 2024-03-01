@@ -1,0 +1,15 @@
+version: '3'
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+  frontend:
+  # for now add a comment mentioning something along the lines of this assuming a specific directory structure, where the frontend is in the same parent folder as the backend
+    build: ../frontend/deaddrop/.
+    ports:
+      - "5173:5173"
+    expose:
+      - "5173"
