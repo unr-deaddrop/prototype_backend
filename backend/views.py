@@ -82,7 +82,7 @@ class CredentialViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def celery(self, request):
-        tasks.task23(data=request.data)
+        tasks.task23.delay(data=request.data)
         return Response(data={'key2':'val2'})
 
     
