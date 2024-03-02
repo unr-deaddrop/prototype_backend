@@ -7,13 +7,17 @@ django-stubs==4.2.7
 django-stubs-ext==4.2.7
 djangorestframework==3.14.0
 
+# Celery
+celery==5.3.6
+
+# Redis
+redis==5.0.2
+
 # Linting
 black==23.11.0
 
 mypy==1.7.1
 mypy-extensions==1.0.0
-
 flake8
 flake8-bugbear
-
 tox==4.11.4

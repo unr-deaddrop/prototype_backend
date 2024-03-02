@@ -1,11 +1,29 @@
 version: '3'
 services:
+
+  redis:
+    image: redis:7.0.11-alpine # other stuff may not work due to alpine. probably will tho
+
   backend:
-    build: .
+    container_name: backend
+    build:
+      context: .
+    command: make migrate run
     ports:
       - "8000:8000"
     expose:
       - "8000"
+    depends_on:
+      - redis
+
+  celery:
+    container_name: celery
+    build:
+      context: .
+    command: celery --app=deaddrop worker -l INFO
+    depends_on:
+      - redis
+
   frontend:
   # for now add a comment mentioning something along the lines of this assuming a specific directory structure, where the frontend is in the same parent folder as the backend
     build: ../frontend/deaddrop/.
