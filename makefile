@@ -17,9 +17,10 @@ fake:
 flush:
 	python3 manage.py flush
 
-purge:
-	make flush
-	rm db.sqlite3
+purge: flush
+	rm db.sqlite3 || true
+	rm -r packages || true
+	rm -r media || true
 	make migrate
 
 admin:

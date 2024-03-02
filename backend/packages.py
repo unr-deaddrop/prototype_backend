@@ -81,11 +81,16 @@ def install_agent(bundle_path: Path) -> Agent:
     # the file to Django, it's a named temporary file; we'll rename it to what it's
     # supposed to be
     final_package_dir = package_path.with_name(internal_name)
-    os.rename(package_path, final_package_dir)
+    try:
+        os.rename(package_path, final_package_dir)
+    except OSError:
+        raise RuntimeError(f"The package seems to already be installed at {final_package_dir}!")
     
     # Copy the original bundle to the media folder
     media_path = Path(Agent.package_file.field.upload_to) / Path(bundle_path.name).with_stem(internal_name)
     bundle_target = Path(settings.MEDIA_ROOT) / media_path
+    # Create the media folder if it doesn't already exist for any reason
+    bundle_target.parent.mkdir(exist_ok=True, parents=True)
     shutil.copy2(bundle_path, bundle_target)
 
     # Generate an Agent object, using the newly-stored media file as the 
@@ -158,7 +163,8 @@ def decompress_and_move_package(
     if target_dir.exists():
         raise RuntimeError(f"Target directory for package at {target_dir} already exists!")
 
-    # Unzip the package to the target directory; complain if it already exists
+    # Unzip the package to the target directory; note that this also handles
+    # the case in which the file isn't actually a zip file
     with zipfile.ZipFile(bundle_path, 'r') as zip_ref:
         zip_ref.extractall(target_dir)
     
