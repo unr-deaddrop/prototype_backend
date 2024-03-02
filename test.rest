@@ -1,0 +1,9 @@
+POST http://127.0.0.1:8000/backend/credentials/celery/
+Content-Type: application/json
+
+{ "credential_type": "adam", "credential_value": "Pass1234!", "expiry": "2024-03-01T16:48:00-08:00"}
+
+###
+
+GET http://127.0.0.1:8000/backend/credentials/ 
+Content-Type: application/json

@@ -1,6 +1,6 @@
 # from django.shortcuts import render
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import action, api_view
 from rest_framework import status, permissions, viewsets
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -10,6 +10,7 @@ from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credenti
 from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
 # from backend import models
 # from backend import serializers
+from celery import shared_task
 
 # Create your views here.
 # Users
@@ -78,6 +79,15 @@ def addAgent(request):
 class CredentialViewSet(viewsets.ModelViewSet):
     queryset = Credential.objects.all()
     serializer_class = CredentialSerializer
+    
+    @action(detail=False, methods=['post'])
+    def celery(self, request):
+        @shared_task
+        def task23():
+            print('task23')
+            return Response(data={'key':'val'})
+        return Response(data={'key2':'val2'})
+
     
     # def list(self, request):
     #     serializer = self.get_serializer(self.get_queryset(), many=True)
