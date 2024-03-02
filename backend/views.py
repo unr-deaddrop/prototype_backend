@@ -4,7 +4,9 @@ from pathlib import Path
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
 from rest_framework import status, permissions, viewsets
+from rest_framework.exceptions import ValidationError
 
+from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 
@@ -68,6 +70,16 @@ class AgentViewSet(viewsets.ModelViewSet):
 
 class InstallAgentViewSet(viewsets.ViewSet):
     serializer_class = BundleSerializer
+    
+    # See https://www.reddit.com/r/django/comments/soebxo/rest_frameworks_filefield_how_can_i_force_using/
+    # This forces all uploaded files to always manifest as an actual file on 
+    # the filesystem, rather than loading the file as something in memory.
+    # The package manager only accepts real files, so this is how
+    def initialize_request(self, request, *args, **kwargs):
+        request = super().initialize_request(request, *args, **kwargs)
+        request.upload_handlers = [TemporaryFileUploadHandler(request=request)]
+        return request
+    
     # POST
     def create(self, request, format=None):
         data = request.data
@@ -79,7 +91,8 @@ class InstallAgentViewSet(viewsets.ViewSet):
         try:
             agent_obj = install_agent(Path(data['bundle_path'].temporary_file_path()))
         except Exception as e:
-            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'bundle_path': [str(e)]})
+            # return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
         serializer = AgentSerializer(agent_obj)
         return Response(serializer.data)
