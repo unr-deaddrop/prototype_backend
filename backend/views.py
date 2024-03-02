@@ -1,3 +1,5 @@
+from pathlib import Path
+
 # from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
@@ -7,7 +9,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 
 from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credential, File, Log
-from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
+from backend.serializers import SignUpSerializer, AgentSerializer, BundleSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
+from backend.packages import install_agent
 # from backend import models
 # from backend import serializers
 import backend.tasks as tasks
@@ -62,6 +65,26 @@ class AgentViewSet(viewsets.ModelViewSet):
     serializer_class = AgentSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'name']
+
+class InstallAgentViewSet(viewsets.ViewSet):
+    serializer_class = BundleSerializer
+    # POST
+    def create(self, request, format=None):
+        data = request.data
+        serializer = BundleSerializer(data=data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        
+        try:
+            agent_obj = install_agent(Path(data['bundle_path'].temporary_file_path()))
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = AgentSerializer(agent_obj)
+        return Response(serializer.data)
+        
+
 @api_view(['GET'])
 def agents(request):
     agents = Agent.objects.all()

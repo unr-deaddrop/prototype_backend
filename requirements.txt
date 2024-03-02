@@ -17,8 +17,7 @@ redis==5.0.2
 black==23.11.0
 
 mypy==1.7.1
-# mypy-extensions==1.0.0
-
-flake8-bugbear==23.12.2
-
+mypy-extensions==1.0.0
+flake8
+flake8-bugbear
 tox==4.11.4
