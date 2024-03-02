@@ -10,14 +10,7 @@ from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credenti
 from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
 # from backend import models
 # from backend import serializers
-from celery import shared_task
-
-@shared_task
-def task23():
-    print('task23')
-    
-    # return Response(data={'key':'val'})
-    return
+from backend.tasks import task23
 
 # Create your views here.
 # Users
