@@ -15,6 +15,10 @@ class Agent(models.Model):
     # Store the version of the agent along with the name. Different versions
     # of the same agent may not be backwards compatible, so it's necessary
     # to store definitions for each (even if their names are the same).
+    #
+    # Note that this differs from "conventional" package management in that
+    # agents generally can't be remotely updated, and therefore the server must
+    # continue using outdated metadata for that agent to communicate with it.
     version = models.CharField(
         max_length=100, help_text="The version for this agent."
     )
