@@ -10,7 +10,7 @@ from backend.models import Agent, Protocol, Endpoint, Task, TaskResult, Credenti
 from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSerializer, EndpointSerializer, TaskSerializer, TaskResultSerializer, CredentialSerializer, FileSerializer, LogSerializer
 # from backend import models
 # from backend import serializers
-from backend.tasks import task23
+import backend.tasks as tasks
 
 # Create your views here.
 # Users
@@ -82,7 +82,7 @@ class CredentialViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def celery(self, request):
-        task23()
+        tasks.task23(data=request.data)
         return Response(data={'key2':'val2'})
 
     
