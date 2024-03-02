@@ -12,6 +12,13 @@ from backend.serializers import SignUpSerializer, AgentSerializer, ProtocolSeria
 # from backend import serializers
 from celery import shared_task
 
+@shared_task
+def task23():
+    print('task23')
+    
+    # return Response(data={'key':'val'})
+    return
+
 # Create your views here.
 # Users
 # @api_view(['POST'])
@@ -82,10 +89,7 @@ class CredentialViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def celery(self, request):
-        @shared_task
-        def task23():
-            print('task23')
-            return Response(data={'key':'val'})
+        task23()
         return Response(data={'key2':'val2'})
 
     
