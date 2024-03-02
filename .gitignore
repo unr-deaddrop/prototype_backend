@@ -1,3 +1,6 @@
+# Don't include the package storage directory
+packages/
+
 # equal to django settings.py MEDIA_ROOT
 media/
 

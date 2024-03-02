@@ -32,6 +32,9 @@ class AgentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         # fields = ['name']
 
+class BundleSerializer(serializers.Serializer):
+    bundle_path = serializers.FileField(allow_empty_file = False)
+
 class ProtocolSerializer(serializers.ModelSerializer):
     class Meta:
         model = Protocol

@@ -1,3 +1,4 @@
+from typing import Any
 import uuid
 import datetime
 
@@ -9,14 +10,70 @@ from django.conf import settings
 
 class Agent(models.Model):
     name = models.CharField(
-        max_length=100, unique=True, help_text="Human-readable name for the agent."
+        max_length=100, help_text="Human-readable name for the agent."
     )
-    # Local path to agent definition root
-    definition_path = models.FileField(upload_to="agents")
+    # Store the version of the agent along with the name. Different versions
+    # of the same agent may not be backwards compatible, so it's necessary
+    # to store definitions for each (even if their names are the same).
+    #
+    # Note that this differs from "conventional" package management in that
+    # agents generally can't be remotely updated, and therefore the server must
+    # continue using outdated metadata for that agent to communicate with it.
+    version = models.CharField(
+        max_length=100, help_text="The version for this agent."
+    )
+    # Path to the original agent package file. It may be the case that the user
+    # wants to distribute the package itself, which is preferred over re-zipping
+    # the unpackaged bundle (since the server may have left behind various files
+    # that shouldn't be bundled.)
+    package_file = models.FileField(
+        upload_to="agents", help_text="The original agent package file."
+    )
+    # Path to the unpackaged contents. It is assumed that the package manager
+    # has already unpackaged and generated the relevant metadata files by the
+    # time an Agent instance is created for that package.
+    #
+    # Implicitly, all Agent instances are strictly tied to a package; it should
+    # not be possible to create an endpoint without its corresponding package.
+    package_path = models.FilePathField(
+        path=settings.AGENT_PACKAGE_DIR,
+        allow_folders=True,
+        allow_files=False,
+        help_text=(
+            f"The directory in `{settings.AGENT_PACKAGE_DIR}` where the agent's files"
+            " have been unpackaged, with metadata generated."
+        ),
+    )
+    
+    class Meta:
+        # No two agents may have the same name and version.
+        unique_together = ('name', 'version',)
+
+    # Various helper commands to get the relevant metadata for this agent. 
+    # Right now, these are just loosely-structured JSON and Python dictionaries;
+    # in the future, deaddrop_meta will allow us to validate the metadata and
+    # return an actual object with attributes.
+    def get_commands(self) -> dict[str, Any]:
+        raise NotImplementedError
+
+    def get_commands_json(self):
+        raise NotImplementedError
+    
+    def get_supported_protocols(self) -> dict[str, Any]:
+        raise NotImplementedError
+    
+    def get_supported_protocols_json(self) -> str:
+        raise NotImplementedError
+    
+    def get_agent_metadata(self) -> dict[str, Any]:
+        raise NotImplementedError
+    
+    def get_agent_metadata_json(self) -> str:
+        raise NotImplementedError
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])
-    
+
     def __str__(self):
         return self.name
 
@@ -26,15 +83,32 @@ class Protocol(models.Model):
     name = models.CharField(
         max_length=100, unique=True, help_text="Human-readable name for the protocol."
     )
-    # Local path to protocol handler binary (may make sense as a FileField?)
-    handler_path = models.FileField(upload_to="protocols")
+    # Path to the original protocol package file. As with agents, the original
+    # package file is preferred when redistribution is necessary, avoiding
+    # bundling any server-specific files with it.
+    package_file = models.FileField(
+        upload_to="protocols", help_text="The original protocol package file."
+    )
+    # Path to the unpackaged contents.
+    #
+    # Note that unlike agents, protocols are required to expose an executable
+    # to allow language agnostic implementations.
+    package_path = package_path = models.FilePathField(
+        path=settings.PROTOCOL_PACKAGE_DIR,
+        allow_folders=True,
+        allow_files=False,
+        help_text=(
+            f"The directory in `{settings.PROTOCOL_PACKAGE_DIR}` where the protocol's"
+            " files have been unpackaged, with metadata generated."
+        ),
+    )
 
     def get_absolute_url(self):
         return reverse("protocol-detail", args=[str(self.id)])
 
     def __str__(self):
         return self.name
-    
+
 
 class Endpoint(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -47,9 +121,7 @@ class Endpoint(models.Model):
     # What protocol and agent does this endpoint use, if any?
     # Also, block endpoints from destruction if an agent or protocol is deleted
     agent = models.ForeignKey(Agent, on_delete=models.PROTECT, related_name="endpoints")
-    protocols = models.ManyToManyField(
-        Protocol, related_name="endpoints"
-    )
+    protocols = models.ManyToManyField(Protocol, related_name="endpoints")
     # Encryption key used in communications, if any
     encryption_key = models.CharField(max_length=64, blank=True, null=True)
     # HMAC key used in communications, if any
@@ -65,16 +137,21 @@ class Endpoint(models.Model):
 
     def __str__(self):
         return self.name + ": " + self.hostname
-    
+
 
 class Task(models.Model):
     # What user and endpoint, if any, is this task associated with?
     # Theoretically, every task was caused by *someone*, even if it's
     # a periodic task
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="tasks", blank=True, null=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="tasks",
+        blank=True,
+        null=True,
+    )
     endpoint = models.ForeignKey(
-        Endpoint, on_delete=models.PROTECT, related_name="tasks",
-        blank=True, null=True
+        Endpoint, on_delete=models.PROTECT, related_name="tasks", blank=True, null=True
     )
     # When was this task started/finished?
     start_time = models.DateTimeField()
@@ -88,8 +165,8 @@ class Task(models.Model):
         return reverse("task-detail", args=[str(self.id)])
 
     def __str__(self):
-        return self.data # should be "{User} task"
-    
+        return self.data  # should be "{User} task"
+
 
 class TaskResult(models.Model):
     # What task is this result associated with?
@@ -105,7 +182,7 @@ class TaskResult(models.Model):
 
     # def __str__(self):
     #     return self.timestamp # this doesn't work and causes log to bug
-    
+
 
 class Credential(models.Model):
     # Task responsible for creating this credential entry, if any
@@ -130,7 +207,7 @@ class Credential(models.Model):
 
     def get_absolute_url(self):
         return reverse("credential-detail", args=[str(self.id)])
-    
+
     def __str__(self):
         return self.credential_type + ": " + self.credential_value
 
@@ -145,9 +222,9 @@ class File(models.Model):
 
     def get_absolute_url(self):
         return reverse("file-detail", args=[str(self.id)])
-    
+
     def __str__(self):
-        return self.file # does this work?
+        return self.file  # does this work?
 
 
 class Log(models.Model):
@@ -158,7 +235,11 @@ class Log(models.Model):
     )
     # Is the log tied to a user?
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="logs",
     )
     # Removed this to reduce complexity as task_result already is linked to a task
     # Is the log tied to a specific task?
@@ -181,6 +262,6 @@ class Log(models.Model):
 
     def get_absolute_url(self):
         return reverse("log-detail", args=[str(self.id)])
-    
+
     def __str__(self):
         return str(self.data)
