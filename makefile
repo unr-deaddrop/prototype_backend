@@ -5,6 +5,9 @@ migrate:
 	python3 manage.py makemigrations
 	python3 manage.py migrate
 
+test:
+	python3 manage.py test
+
 shell:
 	python3 manage.py shell
 
@@ -31,6 +34,12 @@ dep:
 
 startdocker:
 	sudo dockerd
+
+rmdocker:
+	rm -rf  ~/.docker
+
+rmdockerconfig:
+	rm ~/.docker/config.json
 
 docker_image:
 	docker build -t deaddrop/backend:1.0 .
