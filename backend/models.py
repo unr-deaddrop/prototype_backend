@@ -246,10 +246,6 @@ class Log(models.Model):
     task = models.ForeignKey(
         Task, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
     )
-    # Is the log tied to a single task result object?
-    task_result = models.ForeignKey(
-        TaskResult, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
-    )
     # Enumerable field; may make sense to create a "Tag" model and allow
     # it to be associated with arbitrary models, could help with organization
     category = models.CharField(max_length=32, blank=True, null=True)
