@@ -75,7 +75,7 @@ class Agent(models.Model):
         return reverse("agent-detail", args=[str(self.id)])
 
     def __str__(self):
-        return self.name
+        return f"{self.name}-{self.version}"
 
 
 class Protocol(models.Model):
@@ -111,26 +111,42 @@ class Protocol(models.Model):
 
 
 class Endpoint(models.Model):
+    # The agent UUID.
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # Human-readable name, device hostname, and remote address
-    name = models.CharField(max_length=100)
-    hostname = models.CharField(max_length=100)
-    address = models.CharField(max_length=32)
+    
+    # Human-readable name, device hostname, and remote address; these cannot be 
+    # set at construct time
+    name = models.CharField(max_length=100, blank=True, null=True)
+    hostname = models.CharField(max_length=100, blank=True, null=True)
+    address = models.CharField(max_length=32, blank=True, null=True)
+    
     # Does this device actually have an agent installed?
     is_virtual = models.BooleanField()
+    
     # What protocol and agent does this endpoint use, if any?
     # Also, block endpoints from destruction if an agent or protocol is deleted
-    agent = models.ForeignKey(Agent, on_delete=models.PROTECT, related_name="endpoints")
-    protocols = models.ManyToManyField(Protocol, related_name="endpoints")
-    # Encryption key used in communications, if any
-    encryption_key = models.CharField(max_length=64, blank=True, null=True)
-    # HMAC key used in communications, if any
-    hmac_key = models.CharField(max_length=64, blank=True, null=True)
-    # Additional JSON configuration object
+    agent = models.ForeignKey(
+        Agent, 
+        on_delete=models.PROTECT, 
+        related_name="endpoints",
+        blank=True,
+        null=True
+    )
+    
+    # Agent-specific configuration object.
     agent_cfg = models.JSONField(blank=True, null=True)
+    
     # What other endpoints does this endpoint have direct access to?
     # FIXME: this may be wrong according to https://stackoverflow.com/questions/39821723/django-rest-framework-many-to-many-field-related-to-itself
     connections = models.ManyToManyField("self", blank=True, null=True)
+    
+    # The constructed payload for this endpoint (if not virtual).
+    payload_file = models.FileField(
+        upload_to="payloads", 
+        help_text="The original payload bundle.",
+        blank=True,
+        null=True
+    )
 
     def get_absolute_url(self):
         return reverse("endpoint-detail", args=[str(self.id)])
