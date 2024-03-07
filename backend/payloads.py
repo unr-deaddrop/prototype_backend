@@ -55,10 +55,11 @@ PAYLOAD_FILE_NAME = "payload.zip"
 LOG_FILE_NAME = "payload-logs.txt"
 
 def build_payload(
-    build_args: dict[str, Any], 
-    agent: Agent, 
+    agent: Agent,
+    build_args: dict[str, Any],
     task_id: Optional[str],
-    user: Optional[User]
+    user: Optional[User],
+    **kwargs
 ) -> Endpoint:
     """
     Build a new payload from a package, provided a set of validated
@@ -76,10 +77,11 @@ def build_payload(
     If the build fails, as measured by either a failing build script call or
     the absence of `payload.zip`, this raises RuntimeException.
     
-    :param build_args: The build arguments to pass (as a JSON file) to the agent.
+    :param model_data: The serialized data from the payload generation endpoint.
     :param agent: The actual agent to generate the payload from.
     :param task_id: The task ID to associate logs with, if set.
     :param user: The user to associate logs with, if set.
+    :param kwargs: Any other data to pass to the Endpoint constructor.
     :returns: A new Endpoint instance.
     """
     # Copy the entire package into a temporary directory (note that we don't need
@@ -100,8 +102,6 @@ def build_payload(
     
     # Using that temporary directory, invoke build-payload.sh
     script_name = 'build-payload.sh'
-    if os.name == 'nt':
-        script_name = "build-payload.bat"
     
     # Assert that the script is present in our temporary directory, then call it
     target = temp_dir_path / script_name
@@ -130,7 +130,8 @@ def build_payload(
         is_virtual=False,
         agent=agent,
         agent_cfg=build_cfg,
-        payload_file=str(media_path)
+        payload_file=str(media_path),
+        **kwargs
     )
     endpoint.save()
     

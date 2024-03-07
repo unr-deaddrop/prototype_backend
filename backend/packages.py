@@ -6,7 +6,7 @@ allowing the server to discover various metadata files that can be inspected
 at runtime. Unless specified otherwise, the .zip files are called "bundles"
 or "packaged" files; the resulting folder is "unpackaged" or simply a "package".
 
-Agents and protocols are expected to provide an install.sh or install.bat script
+Agents and protocols are expected to provide a makefile with an `install` recipe
 that allows for their metadata and any other install-specific files to be generated.
 The package manager allows this metadata to be correctly discovered and parsed
 on demand, serving as an interface between the package files at rest and the
@@ -186,39 +186,17 @@ def check_required_metadata(package_path: Path, required_files: tuple[str]) -> b
 
     return True
 
-def execute_install_script(package_path: Path, script_name: str = "") -> None:
+def execute_install_script(package_path: Path, shell_command: str = "make install") -> None:
     """
     Execute the installation script provided with the package after unbundling.
 
-    For Windows machines (as determined by `os.name`), this executes `install.bat`
-    by default. For Linux machines, this executes `install.sh` after marking
-    the file as executable *for the current user*.
-
-    The install script's location can be overriden with `script_name` if necessary.
+    This simply executes `make install`. The install command can be overriden if
+    necessary; shell=True is used to make shell utilities available.
     """
-    # If no script name was provided, use the platform-dependent defaults;
-    # assume POSIX unless stated otherwise
-    if not script_name:
-        if os.name == "posix":
-            script_name = 'install.sh'
-        if os.name == 'nt':
-            script_name = "install.bat"
-        
-    # Assert that the script is present at the proposed location
-    script_path = package_path / Path(script_name)
-    if not script_path.exists():
-        raise RuntimeError(f"Install script {script_name} does not exist at {script_path.resolve()}")
-
-    # Mark the script as executable (this does nothing on Windows)
-    # - https://stackoverflow.com/questions/16249440/changing-file-permission-in-python
-    # - https://stackoverflow.com/questions/12791997/how-do-you-do-a-simple-chmod-x-from-within-python/55591471#55591471
-    st = os.stat(script_path)
-    os.chmod(script_path, st.st_mode | stat.S_IEXEC)
-
     # Execute the script in a shell - note this is intentionally blocking and
     # will raise an Exception on non-zero exit codes
     try:
-        p = subprocess.run(script_path.resolve(), shell=False, capture_output=True, cwd=package_path)
+        p = subprocess.run(shell_command, shell=True, capture_output=True, cwd=package_path)
         logger.info(p.stdout)
         if p.stderr:
             logger.warning(p.stderr)

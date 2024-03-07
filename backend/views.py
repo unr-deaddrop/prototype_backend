@@ -74,7 +74,8 @@ class InstallAgentViewSet(viewsets.ViewSet):
     # See https://www.reddit.com/r/django/comments/soebxo/rest_frameworks_filefield_how_can_i_force_using/
     # This forces all uploaded files to always manifest as an actual file on 
     # the filesystem, rather than loading the file as something in memory.
-    # The package manager only accepts real files, so this is how
+    # The package manager only accepts real files, so this guarantees everything
+    # ends up on the filesystem.
     def initialize_request(self, request, *args, **kwargs):
         request = super().initialize_request(request, *args, **kwargs)
         request.upload_handlers = [TemporaryFileUploadHandler(request=request)]
@@ -166,7 +167,28 @@ class EndpointViewSet(viewsets.ModelViewSet):
     queryset = Endpoint.objects.all()
     serializer_class = EndpointSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'name', 'hostname', 'address', 'is_virtual', 'agent', 'protocols', 'encryption_key', 'hmac_key', 'connections']
+    # filterset_fields = ['id', 'name', 'hostname', 'address', 'is_virtual', 'agent', 'protocols', 'encryption_key', 'hmac_key', 'connections']
+    
+    # The user can decide on the following fields. The ID is up to the agent to 
+    # generate.
+    filterset_fields = ['name', 'hostname', 'address', 'is_virtual', 'agent', 'agent_cfg', 'connections']
+    
+    def create(self, request, *args, **kwargs):
+        # This is overriden to change how the serializer returns. By spinning
+        # up an asynchronous task, we can no longer bind the response to the
+        # Endpoint result, since that would cause the request to return after a
+        # *really* long time. Also, it might not even work, so it's better to just
+        # return the task ID and return immediately.
+        
+        serializer = AgentSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        
+        result = tasks.build_payload.delay(serializer.data, request.user)
+        
+        # When implemented on the frontend, this should be used to redirect the
+        # user to the task page.
+        return Response({'task_id': result.id})
 
 # tasks
 class TaskViewSet(viewsets.ModelViewSet):
