@@ -1,12 +1,17 @@
 from typing import Any
+from pathlib import Path
+import logging
 import uuid
+import shutil
 import datetime
 
 from django.contrib.auth.models import User, Group
 from django.db import models
+from django.dispatch import receiver
 from django.urls import reverse
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
 
 class Agent(models.Model):
     name = models.CharField(
@@ -76,6 +81,26 @@ class Agent(models.Model):
 
     def __str__(self):
         return self.name
+
+@receiver(models.signals.post_delete, sender=Agent)
+def delete_packages_on_agent_deletion(sender, instance: Agent, **kwargs):
+    """
+    Remove unused packages from the package manager on deletion.
+    
+    This is particularly helpful during testing, since it means the package manager
+    won't yell at you for re-adding the same package-version combo even if you've
+    deleted the underlying model.
+    
+    Sources:
+    - https://stackoverflow.com/questions/16041232/django-delete-filefield
+    """
+    bundle_file_path = Path(instance.package_file.path)
+    package_path = Path(instance.package_path)
+    
+    logger.debug(f"Deleting {bundle_file_path}, {package_path}")
+    
+    bundle_file_path.unlink(missing_ok=True)
+    shutil.rmtree(package_path)
 
 
 class Protocol(models.Model):
