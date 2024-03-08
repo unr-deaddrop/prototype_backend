@@ -67,6 +67,7 @@ class AgentViewSet(viewsets.ModelViewSet):
     serializer_class = AgentSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['id', 'name']
+    
 
 class InstallAgentViewSet(viewsets.ViewSet):
     serializer_class = BundleSerializer
