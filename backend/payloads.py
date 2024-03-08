@@ -92,23 +92,21 @@ def build_payload(
     if not Path(agent.package_path).exists():
         raise RuntimeError(f"The package at {Path(agent.package_path).resolve()} does not exist!")
     
-    shutil.copytree(agent.package_path, temp_dir.name)
+    shutil.copytree(agent.package_path, temp_dir.name, dirs_exist_ok=True)
     temp_dir_path = Path(temp_dir.name).resolve()
+    logger.info(f"Using {temp_dir_path} for build")
     
     # Convert the build arguments into a JSON file, writing it as build-config.json
     # into the temporary directory
-    with open(temp_dir_path / "build-config.json") as fp:
+    with open(temp_dir_path / "build_config.json", "wt+") as fp:
         json.dump(build_args, fp)
     
-    # Using that temporary directory, invoke build-payload.sh
-    script_name = 'build-payload.sh'
-    
     # Assert that the script is present in our temporary directory, then call it
-    target = temp_dir_path / script_name
+    target = temp_dir_path / "Makefile"
     if not target.exists(): 
-        raise RuntimeError(f"The payload build script {script_name} is missing from {temp_dir_path}!")
-    p = subprocess.run(script_name, shell=False, capture_output=True, cwd=temp_dir_path)
-    logger.info(p.stdout)
+        raise RuntimeError(f"The payload build script {target} is missing from {temp_dir_path}!")
+    p = subprocess.run(["make", "payload_entry"], shell=False, capture_output=True, cwd=temp_dir_path)
+    logger.warning(p.stdout)
     
     # Take payload-logs.txt and convert it into a single LogMessage (this is
     # first so that even if the rest of the build fails, we have a coherent
@@ -125,9 +123,14 @@ def build_payload(
     media_path = get_payload_and_copy(temp_dir_path, agent_id, agent)
     
     # Create and save a new Endpoint instance
+    # If we've made it this far, we're going to be overwriting any user-supplied
+    # payload file since this is clearly a new endpoint.
+    kwargs.pop('payload_file')
+    # Connections are disallowed when creating new physical endpoints.
+    kwargs.pop('connections')
+    
     endpoint = Endpoint(
         id=agent_id,
-        is_virtual=False,
         agent=agent,
         agent_cfg=build_cfg,
         payload_file=str(media_path),

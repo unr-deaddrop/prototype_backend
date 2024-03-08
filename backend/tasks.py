@@ -14,21 +14,13 @@ from django.contrib.auth.models import User
 logger = logging.getLogger(__name__)
 
 @shared_task
-def generate_payload(validated_data: dict[str, Any], user: Optional[User]) -> Endpoint:
+def generate_payload(validated_data: dict[str, Any], user_id: Optional[int]) -> Endpoint:
     """
     Generate a new payload. This is intended to spin up a sibling Docker
-    container.
+    container in a temporary folder with a random container name.
     
-    TODO: If another payload for the same agent is currently underway, this build
-    is likely to fail due to an image name conflict. I don't know if we want
-    to bother fixing this, but it is something to consider. It's not as simple
-    as making anonymous images because we still need to copy out of them, and the
-    scripts assume a specific name... as does Docker Compose. So I don't know
-    if we *can* get away with this.
-    
-    One option could be to have the install scripts manually change the Docker
-    Compose and build scripts' container name at runtime, but isn't that a litte
-    flaky?
+    Note that the keyword arguments `payload_file` and `connections` are ignored
+    when generating physical payloads through this task.
     """
     # It's assumed all of these are coming from the serializer. Flaky, but
     # it works.
@@ -37,6 +29,9 @@ def generate_payload(validated_data: dict[str, Any], user: Optional[User]) -> En
     # the dictionary. The remaining fields are passed into the Endpoint constructor
     # as-is.
     agent = Agent.objects.get(id=validated_data.pop('agent'))
+    user = None
+    if user_id: 
+        user = User.objects.get(id=user_id)
     build_args = validated_data.pop('agent_cfg')
     
     # Get the current task.

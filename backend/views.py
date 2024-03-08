@@ -117,10 +117,10 @@ class CredentialViewSet(viewsets.ModelViewSet):
     queryset = Credential.objects.all()
     serializer_class = CredentialSerializer
     
-    @action(detail=False, methods=['post'])
-    def celery(self, request):
-        tasks.task23.delay(data=request.data)
-        return Response(data={'key2':'val2'})
+    # @action(detail=False, methods=['post'])
+    # def celery(self, request):
+    #     tasks.task23.delay(data=request.data)
+    #     return Response(data={'key2':'val2'})
 
     
     # def list(self, request):
@@ -171,7 +171,7 @@ class EndpointViewSet(viewsets.ModelViewSet):
     
     # The user can decide on the following fields. The ID is up to the agent to 
     # generate.
-    filterset_fields = ['name', 'hostname', 'address', 'is_virtual', 'agent', 'agent_cfg', 'connections']
+    filterset_fields = ['name', 'hostname', 'address', 'is_virtual', 'agent', 'connections']
     
     def create(self, request, *args, **kwargs):
         # This is overriden to change how the serializer returns. By spinning
@@ -180,15 +180,26 @@ class EndpointViewSet(viewsets.ModelViewSet):
         # *really* long time. Also, it might not even work, so it's better to just
         # return the task ID and return immediately.
         
-        serializer = AgentSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors)
         
-        result = tasks.build_payload.delay(serializer.data, request.user)
+        if serializer.data['is_virtual']:
+            raise ValidationError({'is_virtual': ["Virtual endpoints are not yet supported!"]})
+            
+        if not serializer.data['agent']:
+            raise ValidationError({'agent': ["An agent is required for non-virtual endpoints!"]})
+        
+        # result = tasks.generate_payload.delay(serializer.data, request.user.id)
         
         # When implemented on the frontend, this should be used to redirect the
         # user to the task page.
-        return Response({'task_id': result.id})
+        # return Response({'task_id': result.id})
+        
+        # TODO: Celery isn't working, but that's not the scope of this ticket
+        tmp = tasks.generate_payload(serializer.data, request.user.id)
+        serializer_tmp = self.serializer_class(tmp)
+        return Response(serializer_tmp.data)
 
 # tasks
 class TaskViewSet(viewsets.ModelViewSet):
