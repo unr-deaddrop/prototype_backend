@@ -1,6 +1,9 @@
 run:
 	python3 manage.py runserver 0.0.0.0:8000
 
+run_noreload:
+	python3 manage.py runserver 0.0.0.0:8000 --noreload
+
 migrate:
 	python3 manage.py makemigrations
 	python3 manage.py migrate
