@@ -75,7 +75,8 @@ class InstallAgentViewSet(viewsets.ViewSet):
     # See https://www.reddit.com/r/django/comments/soebxo/rest_frameworks_filefield_how_can_i_force_using/
     # This forces all uploaded files to always manifest as an actual file on 
     # the filesystem, rather than loading the file as something in memory.
-    # The package manager only accepts real files, so this is how
+    # The package manager only accepts real files, so this guarantees everything
+    # ends up on the filesystem.
     def initialize_request(self, request, *args, **kwargs):
         request = super().initialize_request(request, *args, **kwargs)
         request.upload_handlers = [TemporaryFileUploadHandler(request=request)]
@@ -117,10 +118,10 @@ class CredentialViewSet(viewsets.ModelViewSet):
     queryset = Credential.objects.all()
     serializer_class = CredentialSerializer
     
-    @action(detail=False, methods=['post'])
-    def celery(self, request):
-        tasks.task23.delay(data=request.data)
-        return Response(data={'key2':'val2'})
+    # @action(detail=False, methods=['post'])
+    # def celery(self, request):
+    #     tasks.task23.delay(data=request.data)
+    #     return Response(data={'key2':'val2'})
 
     
     # def list(self, request):
@@ -167,7 +168,39 @@ class EndpointViewSet(viewsets.ModelViewSet):
     queryset = Endpoint.objects.all()
     serializer_class = EndpointSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id', 'name', 'hostname', 'address', 'is_virtual', 'agent', 'protocols', 'encryption_key', 'hmac_key', 'connections']
+    # filterset_fields = ['id', 'name', 'hostname', 'address', 'is_virtual', 'agent', 'protocols', 'encryption_key', 'hmac_key', 'connections']
+    
+    # The user can decide on the following fields. The ID is up to the agent to 
+    # generate.
+    filterset_fields = ['name', 'hostname', 'address', 'is_virtual', 'agent', 'connections']
+    
+    def create(self, request, *args, **kwargs):
+        # This is overriden to change how the serializer returns. By spinning
+        # up an asynchronous task, we can no longer bind the response to the
+        # Endpoint result, since that would cause the request to return after a
+        # *really* long time. Also, it might not even work, so it's better to just
+        # return the task ID and return immediately.
+        
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        
+        if serializer.data['is_virtual']:
+            raise ValidationError({'is_virtual': ["Virtual endpoints are not yet supported!"]})
+            
+        if not serializer.data['agent']:
+            raise ValidationError({'agent': ["An agent is required for non-virtual endpoints!"]})
+        
+        # result = tasks.generate_payload.delay(serializer.data, request.user.id)
+        
+        # When implemented on the frontend, this should be used to redirect the
+        # user to the task page.
+        # return Response({'task_id': result.id})
+        
+        # TODO: Celery isn't working, but that's not the scope of this ticket
+        tmp = tasks.generate_payload(serializer.data, request.user.id)
+        serializer_tmp = self.serializer_class(tmp)
+        return Response(serializer_tmp.data)
 
 # tasks
 class TaskViewSet(viewsets.ModelViewSet):
