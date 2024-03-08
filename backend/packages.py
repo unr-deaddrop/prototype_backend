@@ -41,10 +41,6 @@ REQUIRED_AGENT_METADATA_FILES = (
     "protocols.json",
 )
 
-# I have no idea lol
-REQUIRED_PROTOCOL_METADATA_FILES = ("protocol.json",)
-
-
 def install_agent(bundle_path: Path) -> Agent:
     """
     Install an agent from a bundle.
@@ -107,29 +103,6 @@ def install_agent(bundle_path: Path) -> Agent:
 
     # Return the resulting Agent.
     return agent_obj
-
-def install_protocol(bundle_path: Path) -> Protocol:
-    """
-    Install a protocol from a bundle.
-
-    Returns the resulting instantiated protocol, saving it to the database.
-    """
-    # Assert that the bundle path actually exists
-    if not bundle_path.exists():
-        raise RuntimeError(f"{bundle_path} does not exist!")
-    
-    # Decompress and move the package.
-
-    # Run the installation script to expose all the metadata.
-
-    # Assert that all of the (currently) required metadata files are there.
-
-    # Generate a Protocol object
-
-    # Commit the Protocol object to the database.
-
-    # Return the resulting Protocol.
-    raise NotImplementedError
 
 
 def decompress_and_move_package(
