@@ -31,6 +31,7 @@ from backend.serializers import (
     CredentialSerializer,
     FileSerializer,
     LogSerializer,
+    TestSerializer
 )
 from backend.packages import install_agent
 
@@ -63,6 +64,13 @@ import backend.tasks as tasks
 #         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class TestViewSet(viewsets.ViewSet):
+    serializer_class = TestSerializer
+    
+    # POST
+    def create(self, request, format=None):
+        tasks.test_connection.delay()
+    
 class SignUpViewSet(viewsets.ViewSet):
     serializer_class = SignUpSerializer
     # def list(self, request):

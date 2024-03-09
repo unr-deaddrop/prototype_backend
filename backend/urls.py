@@ -18,6 +18,7 @@ router.register(r"files", views.FileViewSet, basename="files")
 router.register(r"logs", views.LogViewSet, basename="logs")
 router.register(r"signUp", views.SignUpViewSet, basename="signUp")
 router.register(r"installAgent", views.InstallAgentViewSet, basename="installAgent")
+router.register(r"test", views.TestViewSet, basename="test")
 
 urlpatterns = [
     # path('/', views.credentials),

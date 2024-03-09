@@ -14,6 +14,12 @@ from django.contrib.auth.models import User
 
 logger = logging.getLogger(__name__)
 
+@shared_task
+def test_connection() -> None:
+    """
+    Can the agent table be queried?
+    """
+    Agent.objects.all()
 
 @shared_task
 def generate_payload(

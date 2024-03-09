@@ -13,6 +13,9 @@ from backend.models import (
 from django.contrib.auth.models import User
 
 
+class TestSerializer(serializers.Serializer):
+    test = serializers.CharField()
+
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
