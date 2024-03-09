@@ -8,6 +8,13 @@ from django.urls import reverse
 from django.conf import settings
 from django_celery_results.models import TaskResult
 
+# Add an extra field to the TaskResult model called task_creator. This is an FK
+# to Django's stock User field. While allowed to be blank, it is not intended
+# to remain blank if possible.
+#
+# In practice, it should never be left blank, since all DRF requests have the
+# user available (unless anonymous.)
+TaskResult.add_to_class('task_creator', models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True))
 
 
 class Agent(models.Model):

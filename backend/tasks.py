@@ -6,7 +6,9 @@ from typing import Any, Optional
 import time
 import logging
 
-from celery import shared_task, current_task
+from celery import shared_task, current_task, states
+from celery.signals import before_task_publish
+from django_celery_results.models import TaskResult
 
 from backend.models import Agent, Endpoint
 from backend.payloads import build_payload
@@ -16,6 +18,42 @@ from django.db.models.query import QuerySet
 from backend.serializers import EndpointSerializer
 
 logger = logging.getLogger(__name__)
+
+# https://github.com/celery/django-celery-results/issues/286
+
+# Instantly create TaskResults, rather than waiting until they're done.
+@before_task_publish.connect
+def create_task_result_on_publish(sender=None, headers=None, body=None, **kwargs):
+    if "task" not in headers:
+        return
+
+    TaskResult.objects.store_result(
+        "application/json",
+        "utf-8",
+        headers["id"],
+        None,
+        states.PENDING,
+        # Celery places leading quotes when the task is complete, but this
+        # normally doesn't. For consistency, we place leading quotes. There's
+        # probably a better way to handle this, but I don't think it matters
+        # much right now.
+        task_name='"'+headers["task"]+'"',
+        task_args='"'+headers["argsrepr"]+'"',
+        task_kwargs='"'+headers["kwargsrepr"]+'"',
+    )
+
+def add_user_id_to_task(user_id: Optional[int]) -> None:
+    """
+    Add a user ID to the current TaskResult object.
+    """
+    # Get the current task ID. Use this to query the TaskResult database, which
+    # should already have had an entry made (since the signal is before_task_publish,
+    # the code should not get this far without the call having been made).
+    if user_id:
+        task_id = current_task.request.id
+        task_result = TaskResult.objects.get(task_id=task_id)
+        task_result.task_creator = User.objects.get(id=user_id)
+        task_result.save()
 
 @shared_task
 def test_connection() -> str:
@@ -41,7 +79,8 @@ def generate_payload(
     """
     # It's assumed all of these are coming from the serializer. Flaky, but
     # it works.
-
+    add_user_id_to_task(user_id)
+    
     # Extract the fields used throughout the build process and remove them from
     # the dictionary. The remaining fields are passed into the Endpoint constructor
     # as-is.
@@ -51,7 +90,6 @@ def generate_payload(
         user = User.objects.get(id=user_id)
     build_args = validated_data.pop("agent_cfg")
 
-    # Get the current task.
     task_id = current_task.request.id
     endpoint = build_payload(agent, build_args, task_id, user, **validated_data)
     serializer = EndpointSerializer(endpoint)
