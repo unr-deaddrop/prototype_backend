@@ -48,6 +48,24 @@ class EndpointSerializer(serializers.ModelSerializer):
         model = Endpoint
         fields = '__all__'
 
+class PayloadSerializer(serializers.Serializer):
+    """
+    Serializer to generate a new Endpoint from a payload.
+    
+    This call is asynchronous and returns immediately.
+    
+    TODO: This call should return the task ID responsible for this call when
+    we hook up Celery to the Django backend.
+    
+    TODO: There is no getAgentSchema endpoint (not yet).
+    """
+    # Generic build arguments, specific to the agent. It's expected the user
+    # knows what the agent wants for its build arguments; this is normally
+    # facilitiated by the getAgentSchema endpoint, which provides the user with
+    # the schema - and therefore the structure - of the JSON form expected.
+    build_args = serializers.JSONField()
+    
+
 class TaskSerializer(serializers.ModelSerializer):
     # endpoint = EndpointSerializer()
     data = serializers.JSONField()
