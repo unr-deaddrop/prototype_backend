@@ -1,6 +1,3 @@
-# Package manager
-packages/
-
 # Databases
 media/
 *.sqlite3
