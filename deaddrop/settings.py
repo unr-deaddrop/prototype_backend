@@ -40,11 +40,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    
     "backend.apps.BackendConfig",
     "rest_framework",
     "corsheaders",
     "django_filters",
+    "django_celery_results"
 ]
 
 REST_FRAMEWORK = {
@@ -156,10 +156,26 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Celery stuff
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://redis:6379/0") # this should be django db
+
 # CELERY_TASK_SERIALIZER = 'pickle'
 # CELERY_ACCEPT_CONTENT = ['json', 'pickle']
 # Note that the above is, naturally, quite risky. Avoid as long as possible.
 
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'django-cache'
+
+# https://github.com/celery/django-celery-results/issues/130#issuecomment-583319233
+# This does track if the task is started and correctly creates a TaskResult,
+# but it's missing a lot of information. The method used in tasks.py is preferred
+# instead.
+# CELERY_TASK_TRACK_STARTED = True
+
+# https://github.com/celery/django-celery-results/issues/326
+# Fixes the task name and arguments getting overwritten with None after the task
+# finishes.
+CELERY_RESULT_EXTENDED = True
+
 # Default directories for the package manager
 AGENT_PACKAGE_DIR = "packages/agents"
 PROTOCOL_PACKAGE_DIR = "packages/protocols"
+

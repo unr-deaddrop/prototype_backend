@@ -4,17 +4,21 @@ from backend.models import (
     Agent,
     Protocol,
     Endpoint,
-    Task,
-    TaskResult,
     Credential,
     File,
     Log,
 )
 from django.contrib.auth.models import User
+from django_celery_results.models import TaskResult
 
 
 class TestSerializer(serializers.Serializer):
     test = serializers.CharField()
+
+class TaskResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskResult
+        fields = "__all__"
 
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
@@ -83,23 +87,6 @@ class PayloadSerializer(serializers.Serializer):
     # facilitiated by the getAgentSchema endpoint, which provides the user with
     # the schema - and therefore the structure - of the JSON form expected.
     build_args = serializers.JSONField()
-
-
-class TaskSerializer(serializers.ModelSerializer):
-    # endpoint = EndpointSerializer()
-    data = serializers.JSONField()
-
-    class Meta:
-        model = Task
-        fields = "__all__"
-
-
-class TaskResultSerializer(serializers.ModelSerializer):
-    # task = TaskSerializer(read_only=True) # taskresult should not be able to make tasks
-    class Meta:
-        model = TaskResult
-        fields = "__all__"
-
 
 class CredentialSerializer(serializers.ModelSerializer):
     # task = TaskSerializer()

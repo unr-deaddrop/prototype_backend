@@ -6,6 +6,15 @@ from django.contrib.auth.models import User, Group
 from django.db import models
 from django.urls import reverse
 from django.conf import settings
+from django_celery_results.models import TaskResult
+
+# Add an extra field to the TaskResult model called task_creator. This is an FK
+# to Django's stock User field. While allowed to be blank, it is not intended
+# to remain blank if possible.
+#
+# In practice, it should never be left blank, since all DRF requests have the
+# user available (unless anonymous.)
+TaskResult.add_to_class('task_creator', models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True))
 
 
 class Agent(models.Model):
@@ -152,55 +161,10 @@ class Endpoint(models.Model):
         return self.name + ": " + self.hostname
 
 
-class Task(models.Model):
-    # What user and endpoint, if any, is this task associated with?
-    # Theoretically, every task was caused by *someone*, even if it's
-    # a periodic task
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        related_name="tasks",
-        blank=True,
-        null=True,
-    )
-    endpoint = models.ForeignKey(
-        Endpoint, on_delete=models.PROTECT, related_name="tasks", blank=True, null=True
-    )
-    # When was this task started/finished?
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField(blank=True, null=True)
-    # Is the task still in progress? What was the task? (How do we tie this to Celery?)
-    in_progress = models.BooleanField()
-    # Arbitrary data that may be associated with the task. Should be plaintext.
-    data = models.TextField(blank=True, null=True)
-
-    def get_absolute_url(self):
-        return reverse("task-detail", args=[str(self.id)])
-
-    def __str__(self):
-        return self.data  # should be "{User} task"
-
-
-class TaskResult(models.Model):
-    # What task is this result associated with?
-    task = models.ForeignKey(Task, on_delete=models.PROTECT, related_name="results")
-    # Arbitrary data field; may contain files, a raw message, etc. (Note that
-    # if a file is present, it *should* be stored with File and not this field.)
-    data = models.BinaryField(blank=True, null=True)
-    # Timestamp. May or may not be different from the end time of the task.
-    timestamp = models.DateTimeField(blank=True, null=True)
-
-    def get_absolute_url(self):
-        return reverse("taskresult-detail", args=[str(self.id)])
-
-    # def __str__(self):
-    #     return self.timestamp # this doesn't work and causes log to bug
-
-
 class Credential(models.Model):
     # Task responsible for creating this credential entry, if any
     task = models.ForeignKey(
-        Task,
+        TaskResult,
         on_delete=models.PROTECT,
         blank=True,
         null=True,
@@ -228,7 +192,7 @@ class Credential(models.Model):
 class File(models.Model):
     # Task responsible for creating this credential entry, if any
     task = models.ForeignKey(
-        Task, on_delete=models.PROTECT, blank=True, null=True, related_name="files"
+        TaskResult, on_delete=models.PROTECT, blank=True, null=True, related_name="files"
     )
     # Path to file; location to be determined
     file = models.FileField(upload_to="files")
@@ -254,10 +218,10 @@ class Log(models.Model):
         on_delete=models.PROTECT,
         related_name="logs",
     )
-    # Removed this to reduce complexity as task_result already is linked to a task
+    
     # Is the log tied to a specific task?
     task = models.ForeignKey(
-        Task, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
+        TaskResult, blank=True, null=True, on_delete=models.PROTECT, related_name="logs"
     )
     # Enumerable field; may make sense to create a "Tag" model and allow
     # it to be associated with arbitrary models, could help with organization
