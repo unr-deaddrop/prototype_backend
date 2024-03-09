@@ -40,11 +40,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    
     "backend.apps.BackendConfig",
     "rest_framework",
     "corsheaders",
     "django_filters",
+    "django_celery_results"
 ]
 
 REST_FRAMEWORK = {
@@ -156,10 +156,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Celery stuff
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://redis:6379/0") # this should be django db
+
 # CELERY_TASK_SERIALIZER = 'pickle'
 # CELERY_ACCEPT_CONTENT = ['json', 'pickle']
 # Note that the above is, naturally, quite risky. Avoid as long as possible.
 
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'django-cache'
+
 # Default directories for the package manager
 AGENT_PACKAGE_DIR = "packages/agents"
 PROTOCOL_PACKAGE_DIR = "packages/protocols"
+
