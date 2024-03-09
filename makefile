@@ -21,7 +21,7 @@ fake:
 	python3 manage.py migrate --fake backend
 
 flush:
-	python3 manage.py flush
+	python3 manage.py flush --no-input
 
 purge: flush
 	rm db.sqlite3 || true

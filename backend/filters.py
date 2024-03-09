@@ -1,5 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
 
+
 class AllDjangoFilterBackend(DjangoFilterBackend):
     """
     Filters DRF views by any of the objects properties.
@@ -21,5 +22,3 @@ class AllDjangoFilterBackend(DjangoFilterBackend):
                 fields = "__all__"
 
         return AutoFilterSet
-
-   

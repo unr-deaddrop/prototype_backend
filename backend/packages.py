@@ -41,6 +41,7 @@ REQUIRED_AGENT_METADATA_FILES = (
     "protocols.json",
 )
 
+
 def install_agent(bundle_path: Path) -> Agent:
     """
     Install an agent from a bundle.
@@ -50,12 +51,14 @@ def install_agent(bundle_path: Path) -> Agent:
     # Assert that the bundle path actually exists
     if not bundle_path.exists():
         raise RuntimeError(f"{bundle_path} does not exist!")
-    
+
     # Decompress and move the package.
-    package_path = decompress_and_move_package(bundle_path, Path(settings.AGENT_PACKAGE_DIR))
+    package_path = decompress_and_move_package(
+        bundle_path, Path(settings.AGENT_PACKAGE_DIR)
+    )
 
     # Run the installation script to expose all the metadata. Currently, we don't
-    # permit a custom script name, since that would require another layer of 
+    # permit a custom script name, since that would require another layer of
     # expectations we don't really need to support right now.
     execute_install_script(package_path)
 
@@ -63,16 +66,16 @@ def install_agent(bundle_path: Path) -> Agent:
     if not check_required_metadata(package_path, REQUIRED_AGENT_METADATA_FILES):
         raise RuntimeError("Missing one or more required metadata files")
 
-    # Copy the original bundle to the media directory in which agents are 
-    # being stored by manually constructing the path; see 
+    # Copy the original bundle to the media directory in which agents are
+    # being stored by manually constructing the path; see
     # - https://stackoverflow.com/questions/8332443/set-djangos-filefield-to-an-existing-file
     # - https://stackoverflow.com/questions/72418227/access-upload-to-of-a-models-filefield-in-django
-    
+
     # Extract the agent name and version from the metadata, construct the package
     # name
     agent_name, agent_version = get_agent_info(package_path)
     internal_name = f"{agent_name}-{agent_version}"
-    
+
     # Construct the effective final package directory; note that when we uploaded
     # the file to Django, it's a named temporary file; we'll rename it to what it's
     # supposed to be
@@ -80,22 +83,26 @@ def install_agent(bundle_path: Path) -> Agent:
     try:
         os.rename(package_path, final_package_dir)
     except OSError:
-        raise RuntimeError(f"The package seems to already be installed at {final_package_dir}!")
-    
+        raise RuntimeError(
+            f"The package seems to already be installed at {final_package_dir}!"
+        )
+
     # Copy the original bundle to the media folder
-    media_path = Path(Agent.package_file.field.upload_to) / Path(bundle_path.name).with_stem(internal_name)
+    media_path = Path(Agent.package_file.field.upload_to) / Path(
+        bundle_path.name
+    ).with_stem(internal_name)
     bundle_target = Path(settings.MEDIA_ROOT) / media_path
     # Create the media folder if it doesn't already exist for any reason
     bundle_target.parent.mkdir(exist_ok=True, parents=True)
     shutil.copy2(bundle_path, bundle_target)
 
-    # Generate an Agent object, using the newly-stored media file as the 
+    # Generate an Agent object, using the newly-stored media file as the
     # package_file field
     agent_obj = Agent(
-        name = agent_name,
-        version = agent_version,
-        package_file = str(media_path),
-        package_path = str(final_package_dir)
+        name=agent_name,
+        version=agent_version,
+        package_file=str(media_path),
+        package_path=str(final_package_dir),
     )
 
     # Commit the Agent object to the database.
@@ -105,9 +112,7 @@ def install_agent(bundle_path: Path) -> Agent:
     return agent_obj
 
 
-def decompress_and_move_package(
-    bundle_path: Path, package_base_path: Path
-) -> Path:
+def decompress_and_move_package(bundle_path: Path, package_base_path: Path) -> Path:
     """
     Given a path to a package file, decompress it into the target package directory.
 
@@ -115,7 +120,7 @@ def decompress_and_move_package(
     the resulting folder is returned as the result. Note that it is not required
     that the bundle's name is the same as the underlying package's name, but it
     is required that it is unique relative to other installed packages.
-    
+
     This raises RuntimeError if the target directory already exists.
 
     :param bundle_path: The path to the zipped package bundle to decompress.
@@ -126,21 +131,23 @@ def decompress_and_move_package(
     # provided package path (which is likely either package/agents or
     # package/protocols) and then the package name.
     bundle_name = bundle_path.stem
-    
+
     # Assert that the proposed base path exists.
     if not package_base_path.exists():
         raise RuntimeError(f"Package base path {package_base_path} does not exist!")
 
     # Assert that the new target path *does not* exist
-    target_dir = package_base_path/Path(bundle_name)
+    target_dir = package_base_path / Path(bundle_name)
     if target_dir.exists():
-        raise RuntimeError(f"Target directory for package at {target_dir} already exists!")
+        raise RuntimeError(
+            f"Target directory for package at {target_dir} already exists!"
+        )
 
     # Unzip the package to the target directory; note that this also handles
     # the case in which the file isn't actually a zip file
-    with zipfile.ZipFile(bundle_path, 'r') as zip_ref:
+    with zipfile.ZipFile(bundle_path, "r") as zip_ref:
         zip_ref.extractall(target_dir)
-    
+
     # Return the target directory
     return target_dir
 
@@ -153,13 +160,18 @@ def check_required_metadata(package_path: Path, required_files: tuple[str]) -> b
     Returns True if the files are present, False if any are missing.
     """
     for filename in required_files:
-        if not (package_path/Path(filename)).exists():
-            logger.warning(f"{filename} missing during required metadata check for package rooted at {package_path}")
+        if not (package_path / Path(filename)).exists():
+            logger.warning(
+                f"{filename} missing during required metadata check for package rooted at {package_path}"
+            )
             return False
 
     return True
 
-def execute_install_script(package_path: Path, shell_command: str = "make install") -> None:
+
+def execute_install_script(
+    package_path: Path, shell_command: str = "make install"
+) -> None:
     """
     Execute the installation script provided with the package after unbundling.
 
@@ -169,7 +181,9 @@ def execute_install_script(package_path: Path, shell_command: str = "make instal
     # Execute the script in a shell - note this is intentionally blocking and
     # will raise an Exception on non-zero exit codes
     try:
-        p = subprocess.run(shell_command, shell=True, capture_output=True, cwd=package_path)
+        p = subprocess.run(
+            shell_command, shell=True, capture_output=True, cwd=package_path
+        )
         logger.info(p.stdout)
         if p.stderr:
             logger.warning(p.stderr)
@@ -177,19 +191,20 @@ def execute_install_script(package_path: Path, shell_command: str = "make instal
         logger.exception(f"The install script failed! {p.stdout=} {p.stderr=}")
         raise e
 
+
 def get_agent_info(package_path: Path) -> tuple[str, str]:
     """
     Get the internal name and version of an agent.
-    
+
     This pulls from agent.json; if it does not exist, this raises RuntimeError.
     """
     target = package_path / "agent.json"
     if not target.exists():
         raise RuntimeError(f"agent.json missing from {package_path}")
-    
+
     with open(target, "rt") as fp:
-        data = json.load(fp)    
-        
+        data = json.load(fp)
+
     # TODO: in the future, this should be validated from deaddrop_meta and
     # the actual fields should be taken, not these magic dictionary keys
-    return (data['name'], data['version'])
+    return (data["name"], data["version"])
