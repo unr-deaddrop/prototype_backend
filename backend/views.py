@@ -69,7 +69,11 @@ class TestViewSet(viewsets.ViewSet):
     
     # POST
     def create(self, request, format=None):
-        tasks.test_connection.delay()
+        res = tasks.test_connection.delay()
+        result = res.get()
+        return Response({"task_id":res.id, "data": result})
+        
+        
     
 class SignUpViewSet(viewsets.ViewSet):
     serializer_class = SignUpSerializer

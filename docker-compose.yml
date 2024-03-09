@@ -8,19 +8,47 @@ services:
     container_name: backend
     build:
       context: .
+    # Agents may install libraries, which could cause Django to reload.
+    # This prevents that from happening in the middle of an agent install.
     command: make migrate run_noreload
+    env_file:
+      # Expose .env.dev to Django's settings.py
+      - "./.env.dev"
     ports:
       - "8000:8000"
     expose:
       - "8000"
     volumes:
-      # Make the host's Docker daemon accessible
+      # Make the host's Docker daemon accessible, allows payloads to spin up
+      # their own sibling containers
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
-      - redis
+      - "redis"
+      - "db"
+
+  # https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
+  db:
+    image: postgres:16
+    volumes:
+      # NOTE: This makes data persist beyond the lifetime of the container! You'll 
+      # need to run `make flush` if you want to start over.
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      # Should match some of the relevant keys in .env.
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=deaddrop
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
 
   celery:
     container_name: celery
+    env_file:
+      # Expose .env.dev to each worker's settings.py, allowing to reach out to
+      # the Postgres database
+      - "./.env.dev"
     build:
       context: .
     command: celery --app=deaddrop worker -l INFO
@@ -34,3 +62,7 @@ services:
       - "5173:5173"
     expose:
       - "5173"
+
+# Allows data to persist.
+volumes:
+  postgres_data:

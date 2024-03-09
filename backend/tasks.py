@@ -11,15 +11,20 @@ from celery import shared_task, current_task
 from backend.models import Agent, Endpoint
 from backend.payloads import build_payload
 from django.contrib.auth.models import User
+from django.db.models.query import QuerySet
 
 logger = logging.getLogger(__name__)
 
 @shared_task
-def test_connection() -> None:
+def test_connection() -> str:
     """
     Can the agent table be queried?
     """
-    Agent.objects.all()
+    if Agent.objects.count() > 0:
+        agent = Agent.objects.get(id=1)
+        return agent.name
+    
+    return "None found!"
 
 @shared_task
 def generate_payload(
