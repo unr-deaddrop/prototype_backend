@@ -13,6 +13,8 @@ from backend.payloads import build_payload
 from django.contrib.auth.models import User
 from django.db.models.query import QuerySet
 
+from backend.serializers import EndpointSerializer
+
 logger = logging.getLogger(__name__)
 
 @shared_task
@@ -29,7 +31,7 @@ def test_connection() -> str:
 @shared_task
 def generate_payload(
     validated_data: dict[str, Any], user_id: Optional[int]
-) -> Endpoint:
+) -> dict[str, Any]:
     """
     Generate a new payload. This is intended to spin up a sibling Docker
     container in a temporary folder with a random container name.
@@ -51,4 +53,7 @@ def generate_payload(
 
     # Get the current task.
     task_id = current_task.request.id
-    return build_payload(agent, build_args, task_id, user, **validated_data)
+    endpoint = build_payload(agent, build_args, task_id, user, **validated_data)
+    serializer = EndpointSerializer(endpoint)
+    return serializer.data
+    

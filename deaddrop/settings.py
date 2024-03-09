@@ -156,6 +156,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Celery stuff
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://redis:6379/0") # this should be django db
+# CELERY_TASK_SERIALIZER = 'pickle'
+# CELERY_ACCEPT_CONTENT = ['json', 'pickle']
+# Note that the above is, naturally, quite risky. Avoid as long as possible.
 
 # Default directories for the package manager
 AGENT_PACKAGE_DIR = "packages/agents"

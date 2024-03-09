@@ -17,10 +17,13 @@ COPY requirements.txt .
 RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
 
-# Set up the Postgres entrypoints cript
+# Set up the Postgres entrypoint script
 COPY entrypoint.sh .
 RUN sed -i 's/\r$//g' entrypoint.sh
 RUN chmod +x entrypoint.sh
+
+# Install nc so the script actually works
+RUN apt install netcat-openbsd
 
 # Copy everything else
 COPY . .

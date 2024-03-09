@@ -242,16 +242,16 @@ class EndpointViewSet(viewsets.ModelViewSet):
                 {"agent": ["An agent is required for non-virtual endpoints!"]}
             )
 
-        # result = tasks.generate_payload.delay(serializer.data, request.user.id)
+        result = tasks.generate_payload.delay(serializer.data, request.user.id)
 
         # When implemented on the frontend, this should be used to redirect the
         # user to the task page.
-        # return Response({'task_id': result.id})
+        return Response({'task_id': result.id})
 
-        # TODO: Celery isn't working, but that's not the scope of this ticket
-        tmp = tasks.generate_payload(serializer.data, request.user.id)
-        serializer_tmp = self.serializer_class(tmp)
-        return Response(serializer_tmp.data)
+        # Synchronous version, used originally for debugging
+        # tmp = tasks.generate_payload(serializer.data, request.user.id)
+        # serializer_tmp = self.serializer_class(tmp)
+        # return Response(serializer_tmp.data)
 
 
 # tasks

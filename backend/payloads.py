@@ -161,7 +161,9 @@ def get_and_save_build_log(
         log = Log(
             source=None,
             user=user,
-            task=task_id,
+            # TODO: This won't work until the shift to the Django backend.
+            # task=task_id, 
+            task=None,
             category="payload-build",
             level=DeadDropLogLevel.INFO,
             timestamp=datetime.now(),

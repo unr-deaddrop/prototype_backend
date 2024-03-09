@@ -22,6 +22,11 @@ services:
       # Make the host's Docker daemon accessible, allows payloads to spin up
       # their own sibling containers
       - /var/run/docker.sock:/var/run/docker.sock
+      # This allows the package manager to work across containers. Of course,
+      # this runs a few risks on its own. Ditto for placing things in the media
+      # folder.
+      - packages:/app/packages
+      - media:/app/media
     depends_on:
       - "redis"
       - "db"
@@ -31,8 +36,13 @@ services:
     image: postgres:16
     volumes:
       # NOTE: This makes data persist beyond the lifetime of the container! You'll 
-      # need to run `make flush` if you want to start over.
+      # need to run `make flush` if you want to start over (which occurs in 
+      # entrypoint.sh by default).
       - postgres_data:/var/lib/postgresql/data/
+      # This is just here so the entrypoint script can nuke the applicable
+      # directories if needed.
+      - packages:/app/packages
+      - media:/app/media
     environment:
       # Should match some of the relevant keys in .env.
       - POSTGRES_USER=admin
@@ -54,6 +64,14 @@ services:
     command: celery --app=deaddrop worker -l INFO
     depends_on:
       - redis
+      - db
+    volumes:
+      # Make the host's Docker daemon accessible, allows payloads to spin up
+      # their own sibling containers
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Allow the packages and media folders to be edited across containers
+      - packages:/app/packages
+      - media:/app/media
 
   frontend:
   # for now add a comment mentioning something along the lines of this assuming a specific directory structure, where the frontend is in the same parent folder as the backend
@@ -63,6 +81,9 @@ services:
     expose:
       - "5173"
 
-# Allows data to persist.
+# Allows data to persist. Particularly important for the package manager, since
+# it needs different containers all operating on the same data.
 volumes:
   postgres_data:
+  packages:
+  media:
