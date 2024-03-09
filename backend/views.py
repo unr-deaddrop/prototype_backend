@@ -20,6 +20,7 @@ from backend.models import (
     File,
     Log,
 )
+from django_celery_results.models import TaskResult
 from backend.serializers import (
     SignUpSerializer,
     AgentSerializer,
@@ -27,11 +28,11 @@ from backend.serializers import (
     ProtocolSerializer,
     EndpointSerializer,
     TaskSerializer,
-    TaskResultSerializer,
     CredentialSerializer,
     FileSerializer,
     LogSerializer,
-    TestSerializer
+    TestSerializer,
+    TaskResultSerializer,
 )
 from backend.packages import install_agent
 
@@ -63,6 +64,14 @@ import backend.tasks as tasks
 #             return Response(data=response, status=status.HTTP_201_CREATED)
 #         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = TaskResult.objects.all()
+    serializer_class = TaskResultSerializer
+    filter_backends = [DjangoFilterBackend]
+    # filterset_fields = [
+    #     "id",
+    #     "name",
+    # ]
 
 class TestViewSet(viewsets.ViewSet):
     serializer_class = TestSerializer
@@ -266,15 +275,15 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 
 # TaskResults
-class TaskResultViewSet(viewsets.ModelViewSet):
-    queryset = TaskResult.objects.all()
-    serializer_class = TaskResultSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = [
-        "id",
-        "task",
-        "timestamp",
-    ]
+# class TaskResultViewSet(viewsets.ModelViewSet):
+#     queryset = TaskResult.objects.all()
+#     serializer_class = TaskResultSerializer
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_fields = [
+#         "id",
+#         "task",
+#         "timestamp",
+#     ]
 
 
 # Files

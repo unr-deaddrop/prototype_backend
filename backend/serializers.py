@@ -5,16 +5,22 @@ from backend.models import (
     Protocol,
     Endpoint,
     Task,
-    TaskResult,
+    # TaskResult,
     Credential,
     File,
     Log,
 )
 from django.contrib.auth.models import User
+from django_celery_results.models import TaskResult
 
 
 class TestSerializer(serializers.Serializer):
     test = serializers.CharField()
+
+class TaskResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskResult
+        fields = "__all__"
 
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
@@ -92,14 +98,6 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = "__all__"
-
-
-class TaskResultSerializer(serializers.ModelSerializer):
-    # task = TaskSerializer(read_only=True) # taskresult should not be able to make tasks
-    class Meta:
-        model = TaskResult
-        fields = "__all__"
-
 
 class CredentialSerializer(serializers.ModelSerializer):
     # task = TaskSerializer()

@@ -12,13 +12,13 @@ router.register(r"agents", views.AgentViewSet, basename="agents")
 router.register(r"protocols", views.ProtocolViewSet, basename="protocols")
 router.register(r"endpoints", views.EndpointViewSet, basename="endpoints")
 router.register(r"tasks", views.TaskViewSet, basename="tasks")
-router.register(r"taskresults", views.TaskResultViewSet, basename="taskresults")
 router.register(r"credentials", views.CredentialViewSet, basename="credentials")
 router.register(r"files", views.FileViewSet, basename="files")
 router.register(r"logs", views.LogViewSet, basename="logs")
 router.register(r"signUp", views.SignUpViewSet, basename="signUp")
 router.register(r"installAgent", views.InstallAgentViewSet, basename="installAgent")
 router.register(r"test", views.TestViewSet, basename="test")
+router.register(r"taskresults", views.TaskResultViewSet, basename="taskresults")
 
 urlpatterns = [
     # path('/', views.credentials),
