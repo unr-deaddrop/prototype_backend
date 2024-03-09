@@ -14,8 +14,6 @@ from backend.models import (
     Agent,
     Protocol,
     Endpoint,
-    Task,
-    TaskResult,
     Credential,
     File,
     Log,
@@ -27,7 +25,6 @@ from backend.serializers import (
     BundleSerializer,
     ProtocolSerializer,
     EndpointSerializer,
-    TaskSerializer,
     CredentialSerializer,
     FileSerializer,
     LogSerializer,
@@ -261,30 +258,6 @@ class EndpointViewSet(viewsets.ModelViewSet):
         # tmp = tasks.generate_payload(serializer.data, request.user.id)
         # serializer_tmp = self.serializer_class(tmp)
         # return Response(serializer_tmp.data)
-
-
-# tasks
-class TaskViewSet(viewsets.ModelViewSet):
-    queryset = Task.objects.all()
-    serializer_class = TaskSerializer
-
-    def create(self, request, *args, **kwargs):
-        print("all:", request.data)
-        print("\nform data:", request.data["data"])
-        return super().create(request, *args, **kwargs)
-
-
-# TaskResults
-# class TaskResultViewSet(viewsets.ModelViewSet):
-#     queryset = TaskResult.objects.all()
-#     serializer_class = TaskResultSerializer
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_fields = [
-#         "id",
-#         "task",
-#         "timestamp",
-#     ]
-
 
 # Files
 class FileViewSet(viewsets.ModelViewSet):

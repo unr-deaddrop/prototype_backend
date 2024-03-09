@@ -4,8 +4,6 @@ from backend.models import (
     Agent,
     Protocol,
     Endpoint,
-    Task,
-    # TaskResult,
     Credential,
     File,
     Log,
@@ -89,15 +87,6 @@ class PayloadSerializer(serializers.Serializer):
     # facilitiated by the getAgentSchema endpoint, which provides the user with
     # the schema - and therefore the structure - of the JSON form expected.
     build_args = serializers.JSONField()
-
-
-class TaskSerializer(serializers.ModelSerializer):
-    # endpoint = EndpointSerializer()
-    data = serializers.JSONField()
-
-    class Meta:
-        model = Task
-        fields = "__all__"
 
 class CredentialSerializer(serializers.ModelSerializer):
     # task = TaskSerializer()

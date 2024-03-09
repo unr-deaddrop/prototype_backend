@@ -7,7 +7,6 @@ run_noreload:
 migrate:
 	python3 manage.py makemigrations
 	python3 manage.py migrate
-	python3 manage.py migrate django_celery_results
 
 test:
 	python3 manage.py test
