@@ -8,11 +8,14 @@ services:
     container_name: backend
     build:
       context: .
-    command: make migrate run
+    command: make migrate run_noreload
     ports:
       - "8000:8000"
     expose:
       - "8000"
+    volumes:
+      # Make the host's Docker daemon accessible
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - redis
 
