@@ -19,9 +19,7 @@ class Agent(models.Model):
     # Note that this differs from "conventional" package management in that
     # agents generally can't be remotely updated, and therefore the server must
     # continue using outdated metadata for that agent to communicate with it.
-    version = models.CharField(
-        max_length=100, help_text="The version for this agent."
-    )
+    version = models.CharField(max_length=100, help_text="The version for this agent.")
     # Path to the original agent package file. It may be the case that the user
     # wants to distribute the package itself, which is preferred over re-zipping
     # the unpackaged bundle (since the server may have left behind various files
@@ -44,12 +42,15 @@ class Agent(models.Model):
             " have been unpackaged, with metadata generated."
         ),
     )
-    
+
     class Meta:
         # No two agents may have the same name and version.
-        unique_together = ('name', 'version',)
+        unique_together = (
+            "name",
+            "version",
+        )
 
-    # Various helper commands to get the relevant metadata for this agent. 
+    # Various helper commands to get the relevant metadata for this agent.
     # Right now, these are just loosely-structured JSON and Python dictionaries;
     # in the future, deaddrop_meta will allow us to validate the metadata and
     # return an actual object with attributes.
@@ -58,16 +59,16 @@ class Agent(models.Model):
 
     def get_commands_json(self):
         raise NotImplementedError
-    
+
     def get_supported_protocols(self) -> dict[str, Any]:
         raise NotImplementedError
-    
+
     def get_supported_protocols_json(self) -> str:
         raise NotImplementedError
-    
+
     def get_agent_metadata(self) -> dict[str, Any]:
         raise NotImplementedError
-    
+
     def get_agent_metadata_json(self) -> str:
         raise NotImplementedError
 
@@ -113,39 +114,35 @@ class Protocol(models.Model):
 class Endpoint(models.Model):
     # The agent UUID.
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    # Human-readable name, device hostname, and remote address; these cannot be 
+
+    # Human-readable name, device hostname, and remote address; these cannot be
     # set at construct time
     name = models.CharField(max_length=100, blank=True, null=True)
     hostname = models.CharField(max_length=100, blank=True, null=True)
     address = models.CharField(max_length=32, blank=True, null=True)
-    
+
     # Does this device actually have an agent installed?
     is_virtual = models.BooleanField()
-    
+
     # What protocol and agent does this endpoint use, if any?
     # Also, block endpoints from destruction if an agent or protocol is deleted
     agent = models.ForeignKey(
-        Agent, 
-        on_delete=models.PROTECT, 
-        related_name="endpoints",
-        blank=True,
-        null=True
+        Agent, on_delete=models.PROTECT, related_name="endpoints", blank=True, null=True
     )
-    
+
     # Agent-specific configuration object.
     agent_cfg = models.JSONField(blank=True, null=True)
-    
+
     # What other endpoints does this endpoint have direct access to?
     # FIXME: this may be wrong according to https://stackoverflow.com/questions/39821723/django-rest-framework-many-to-many-field-related-to-itself
     connections = models.ManyToManyField("self", blank=True, null=True)
-    
+
     # The constructed payload for this endpoint (if not virtual).
     payload_file = models.FileField(
-        upload_to="payloads", 
+        upload_to="payloads",
         help_text="The original payload bundle.",
         blank=True,
-        null=True
+        null=True,
     )
 
     def get_absolute_url(self):
