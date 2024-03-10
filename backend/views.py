@@ -5,10 +5,14 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, api_view
 from rest_framework import status, permissions, viewsets
 from rest_framework.exceptions import ValidationError
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 
 from backend.models import (
     Agent,
@@ -20,7 +24,7 @@ from backend.models import (
 )
 from django_celery_results.models import TaskResult
 from backend.serializers import (
-    SignUpSerializer,
+    UserSerializer,
     AgentSerializer,
     BundleSerializer,
     ProtocolSerializer,
@@ -79,23 +83,60 @@ class TestViewSet(viewsets.ViewSet):
         result = res.get()
         return Response({"task_id":res.id, "data": result})
         
-        
+# class SignUpViewSet(viewsets.ViewSet):
+#     serializer_class = SignUpSerializer
+#     # def list(self, request):
+#     #     queryset = User.objects.all()
+#     #     serializer = self.serializer_class(queryset, many=True)
+#     #     return Response(data=serializer.data)
     
-class SignUpViewSet(viewsets.ViewSet):
-    serializer_class = SignUpSerializer
-    # def list(self, request):
-    #     queryset = User.objects.all()
-    #     serializer = self.serializer_class(queryset, many=True)
-    #     return Response(data=serializer.data)
-
-    def create(self, request):
+#     def create(self, request):
+#         data = request.data
+#         serializer = self.serializer_class(data=data)
+#         if serializer.is_valid():
+#             account = serializer.save()
+#             token = Token.objects.get(user=account).key
+#             response = {
+#                 "message": "User created",
+#                 "token": token,
+#                 "data": serializer.data
+#             }
+#             return Response(data=response, status=status.HTTP_201_CREATED)
+#         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class UserViewSet(viewsets.ViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny]) # detail is false bc we're posting with no pk
+    def sign_up(self, request):
         data = request.data
         serializer = self.serializer_class(data=data)
         if serializer.is_valid():
-            serializer.save()
-            response = {"message": "User created", "data": serializer.data}
+            account = serializer.save()
+            token = Token.objects.create(user=account).key # might also be create instead of get
+            response = {
+                "message": "User created",
+                "token": token,
+                "data": serializer.data
+            }
             return Response(data=response, status=status.HTTP_201_CREATED)
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def login(self, request):
+        data = request.data
+        account = get_object_or_404(User, username=data['username'])
+        if not account.check_password(data['password']):
+            return Response("missing user", status=status.HTTP_404_NOT_FOUND)
+        token, created = Token.objects.get_or_create(user=account)
+        serializer = self.serializer_class(account)
+        response = {
+                "message": "successfully logged in",
+                "token": token.key,
+                "data": serializer.data
+            }
+        return Response(data=response, status=status.HTTP_200_OK)
 
 
 # Agents
