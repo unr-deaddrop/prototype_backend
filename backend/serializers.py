@@ -117,7 +117,7 @@ class LogSerializer(serializers.ModelSerializer):
         model = Log
         fields = "__all__"
 
-class EndpointSchemaSerializer(serializers.Serializer):
+class CommandSchemaSerializer(serializers.Serializer):
     """
     Serializer used to request the JSON schema for either all commands associated
     with an endpoint, or a specific command for that endpoint.

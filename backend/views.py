@@ -30,7 +30,7 @@ from backend.serializers import (
     LogSerializer,
     TestSerializer,
     TaskResultSerializer,
-    EndpointSchemaSerializer,
+    CommandSchemaSerializer,
     AgentSchemaSerializer,
 )
 from backend.packages import install_agent
@@ -110,6 +110,13 @@ class AgentViewSet(viewsets.ModelViewSet):
 
 
 class InstallAgentViewSet(viewsets.ViewSet):
+    """
+    Viewset used to allow users to install agents.
+    
+    This is its own viewset independent from AgentViewSet, primarily because
+    of the 
+    
+    """
     serializer_class = BundleSerializer
 
     # See https://www.reddit.com/r/django/comments/soebxo/rest_frameworks_filefield_how_can_i_force_using/
@@ -189,12 +196,51 @@ class CredentialViewSet(viewsets.ModelViewSet):
 class AgentSchemaViewSet(viewsets.ViewSet):
     """
     Use this viewset to retrieve the schemas needed to generate a dynamic form
-    for agent configuration.
+    for agent configuration. 
+    
+    
+    This is typically used to grab all of the agent and protocol configuration 
+    needed to construct a payload, which can then be used to issue a POST request
+    to the `/endpoint` endpoint.
     
     Note that this viewset runs the *raw* schema in agent.json through the 
-    preprocessor, which may modify
+    preprocessor, which may modify the schema by filling in reasonable default
+    values, setting fields as read-only, and removing certain schema elements.
     """
-    serializer_class = 
+    serializer_class = AgentSchemaSerializer
+    
+    # TODO: shouldn't these be part of Agent/EndpointViewSet and just be an
+    # @action(detail=True) instead, so we can actually use the PK? wouldn't that
+    # be like a thousand times easier?
+    
+    # def retrieve(self, request, pk=None):
+    #     queryset = User.objects.all()
+    #     user = get_object_or_404(queryset, pk=pk)
+    #     serializer = UserSerializer(user)
+    #     return Response(serializer.data)
+
+class CommandSchemaViewSet(viewsets.ViewSet):
+    """
+    Use this viewset to retrieve the schemas needed to generate a dynamic form
+    for command execution. 
+    
+    This is typically used to grab all of the command arguments needed to construct 
+    a command request message while simultaneously allowing them to be validated 
+    server-side and in the web interface, *before* they get sent out to the agent. 
+    This provides the user with more immediate feedback than if they received
+    a command error over an hour later.
+    """
+    serializer_class = CommandSchemaSerializer
+    
+class ExecuteCommandViewSet(viewsets.ViewSet):
+    """
+    Use this viewset to start the tasking for executing a command.
+    
+    This effectively generates two asynchronous tasks - one to execute the command,
+    and another to receive the result of the command. Both tasks are associated with
+    the authenticated user for the request.
+    """
+    #TODO: make this!
 
 # @api_view(['GET'])
 # def credentials(request):
