@@ -20,13 +20,12 @@ class TaskResultSerializer(serializers.ModelSerializer):
         model = TaskResult
         fields = "__all__"
 
-class SignUpSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         # fields = '__all__'
         # fields = ['username', 'first_name', 'last_name', 'email', 'password', 'groups', 'user_permissions', 'is_staff', 'is_active', 'is_superuser', 'last_login', 'last_login', 'date_joined']
-        fields = ["username", "password"]
-
+        fields = ['id', 'username', 'password']
     # def validate(self, attrs):
     #     email_exists = User.objects.filter(email=attrs['email']).exists()
     #     if email_exists:
