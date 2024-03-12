@@ -1,5 +1,7 @@
 from typing import Any
+from pathlib import Path
 import uuid
+import json
 import datetime
 
 from django.contrib.auth.models import User, Group
@@ -59,33 +61,40 @@ class Agent(models.Model):
             "version",
         )
 
+    def deserialize_package_json(self, package_file: str) -> dict[str, Any]:
+        json_path = (Path(self.package_path)/package_file).resolve()
+        if not json_path.exists():
+            raise RuntimeError(f"{json_path} does not exist in the package directory")
+        with open(json_path, "rt") as fp:
+            return json.load(fp)
+
     # Various helper commands to get the relevant metadata for this agent.
     # Right now, these are just loosely-structured JSON and Python dictionaries;
     # in the future, deaddrop_meta will allow us to validate the metadata and
     # return an actual object with attributes.
-    def get_commands(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    def get_supported_protocols(self) -> list[str]:
-        raise NotImplementedError
+    def get_command_metadata(self) -> dict[str, Any]:
+        """
+        Get all supported commands and their details for this agent.
+        
+        This simply deserializes commands.json and converts it to a dictionary.
+        """
+        return self.deserialize_package_json("commands.json")
 
     def get_protocol_metadata(self) -> dict[str]:
         """
-        Get the metadata for each available
+        Get all supported protocols and their details for this agent.
+        
+        This simply deserializes protocols.json and converts it to a dictionary.
         """
-        raise NotImplementedError
+        return self.deserialize_package_json("protocols.json")
 
     def get_agent_metadata(self) -> dict[str, Any]:
         """
-        Get the contents of agent.json as a dictionary.
+        Get the metadata for the agent.
+        
+        This simply deserializes agent.json and converts it to a dictionary.
         """
-        raise NotImplementedError
-
-    def get_agent_schema(self) -> dict[str, Any]:
-        """
-        Get the schema for the configuration specific to the agent.
-        """
-        raise NotImplementedError
+        return self.deserialize_package_json("agent.json")
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])

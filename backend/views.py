@@ -30,6 +30,8 @@ from backend.serializers import (
     LogSerializer,
     TestSerializer,
     TaskResultSerializer,
+    EndpointSchemaSerializer,
+    AgentSchemaSerializer,
 )
 from backend.packages import install_agent
 
@@ -184,6 +186,15 @@ class CredentialViewSet(viewsets.ModelViewSet):
     # def destroy(self, request, pk=None):
     #     pass
 
+class AgentSchemaViewSet(viewsets.ViewSet):
+    """
+    Use this viewset to retrieve the schemas needed to generate a dynamic form
+    for agent configuration.
+    
+    Note that this viewset runs the *raw* schema in agent.json through the 
+    preprocessor, which may modify
+    """
+    serializer_class = 
 
 # @api_view(['GET'])
 # def credentials(request):

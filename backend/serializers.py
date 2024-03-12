@@ -1,3 +1,5 @@
+from typing import Any
+
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 from backend.models import (
@@ -13,7 +15,7 @@ from django_celery_results.models import TaskResult
 
 
 class AgentSchemaViewSet(viewsets.ViewSet):
-    
+
 
 class TestSerializer(serializers.Serializer):
     test = serializers.CharField()
@@ -114,3 +116,16 @@ class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log
         fields = "__all__"
+
+class EndpointSchemaSerializer(serializers.Serializer):
+    """
+    Serializer used to request the JSON schema for either all commands associated
+    with an endpoint, or a specific command for that endpoint.
+    """
+    # endpoint = serializers.UUIDField() # PK of the endpoint, a UUID
+    endpoint = EndpointSerializer(read_only=True)
+    command = serializers.CharField(required=False) # By command name, optional
+
+class AgentSchemaSerializer(serializers.Serializer):
+    # agent = serializers.IntegerField() # PK of agent
+    agent = AgentSerializer(read_only=True)
