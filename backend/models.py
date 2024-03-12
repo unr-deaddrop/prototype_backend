@@ -66,19 +66,25 @@ class Agent(models.Model):
     def get_commands(self) -> dict[str, Any]:
         raise NotImplementedError
 
-    def get_commands_json(self):
+    def get_supported_protocols(self) -> list[str]:
         raise NotImplementedError
 
-    def get_supported_protocols(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    def get_supported_protocols_json(self) -> str:
+    def get_protocol_metadata(self) -> dict[str]:
+        """
+        Get the metadata for each available
+        """
         raise NotImplementedError
 
     def get_agent_metadata(self) -> dict[str, Any]:
+        """
+        Get the contents of agent.json as a dictionary.
+        """
         raise NotImplementedError
 
-    def get_agent_metadata_json(self) -> str:
+    def get_agent_schema(self) -> dict[str, Any]:
+        """
+        Get the schema for the configuration specific to the agent.
+        """
         raise NotImplementedError
 
     def get_absolute_url(self):

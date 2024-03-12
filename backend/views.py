@@ -61,6 +61,7 @@ import backend.tasks as tasks
 #             return Response(data=response, status=status.HTTP_201_CREATED)
 #         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TaskResult.objects.all()
     serializer_class = TaskResultSerializer
@@ -70,17 +71,17 @@ class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
     #     "name",
     # ]
 
+
 class TestViewSet(viewsets.ViewSet):
     serializer_class = TestSerializer
-    
+
     # POST
     def create(self, request, format=None):
         res = tasks.test_connection.delay()
         result = res.get()
-        return Response({"task_id":res.id, "data": result})
-        
-        
-    
+        return Response({"task_id": res.id, "data": result})
+
+
 class SignUpViewSet(viewsets.ViewSet):
     serializer_class = SignUpSerializer
     # def list(self, request):
@@ -252,12 +253,13 @@ class EndpointViewSet(viewsets.ModelViewSet):
 
         # When implemented on the frontend, this should be used to redirect the
         # user to the task page.
-        return Response({'task_id': result.id})
+        return Response({"task_id": result.id})
 
         # Synchronous version, used originally for debugging
         # tmp = tasks.generate_payload(serializer.data, request.user.id)
         # serializer_tmp = self.serializer_class(tmp)
         # return Response(serializer_tmp.data)
+
 
 # Files
 class FileViewSet(viewsets.ModelViewSet):
