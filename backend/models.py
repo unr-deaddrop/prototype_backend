@@ -15,6 +15,7 @@ from django.dispatch import receiver
 
 from django_celery_results.models import TaskResult
 
+from deaddrop_meta.protocol_lib import DeadDropMessageType, DeadDropMessage
 
 # Add an extra field to the TaskResult model called task_creator. This is an FK
 # to Django's stock User field. While allowed to be blank, it is not intended
@@ -223,6 +224,72 @@ class Endpoint(models.Model):
     def __str__(self):
         return self.name + ": " + self.hostname
 
+class Message(models.Model):
+    """
+    Server-side representation of a DeadDropMessage.
+    
+    Note that this is generally only used to keep track of messages that have
+    already been seen to prevent acting on them twice; it also provides an 
+    alternative method of viewing all communication within the framework that is
+    independent of the Log model.
+    
+    The structure of this model is virtually identical to DeadDropMessage. Note
+    that since this is intended to be a "non-functional" class, no attempt at 
+    matching the structure of the *payload* fields is made. Payloads are dumped
+    out as-is.
+    
+    For the sake of logging, all messages that are ever received or sent by the 
+    server should result in the creation of a Message model, even if the same
+    information is duplicated elsewhere.
+    """
+    # This generally should not change very often, so this is valid.
+    # By convention, deaddrop_meta should never *remove* existing message types.
+    MessageTypes = models.TextChoices(
+        'MessageTypes',
+        [(mtype.name, mtype.value) for mtype in DeadDropMessageType]
+    )
+    
+    message_id = models.UUIDField(primary_key=True, editable=False)
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
+    source = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
+    timestamp = models.DateTimeField()
+    payload = models.JSONField()
+    message_type = models.CharField(choices=MessageTypes)
+    digest = models.BinaryField(blank=True, null=True)
+    
+    @classmethod
+    def from_deaddrop_message(cls, msg: DeadDropMessage) -> "Message":
+        """
+        Construct (but do not save) a new Message instance from a DeadDropMessage.
+        """
+        user = None
+        source = None
+        
+        try:
+            user = User.objects.get(id=msg.user_id)
+        except User.DoesNotExist:
+            pass
+        
+        try:
+            source = Endpoint.objects.get(id=msg.source_id)
+        except Endpoint.DoesNotExist:
+            pass
+        
+        
+        # Note that there is a nonzero chance that the contents of the message are not 
+        # Django-serializable but *are* Pydantic-serializable. I don't think we'll run
+        # into this, but we may need to revisit this. By convention, messages don't have
+        # scary datatypes, but that's not really much of a guarantee.
+        return cls(
+            message_id = msg.message_id,
+            user = user,
+            source = source,
+            timestamp = msg.timestamp,
+            payload = msg.payload.model_dump_json(),
+            message_type = msg.payload.message_type,
+            digest = msg.digest
+        )
+    
 
 class Credential(models.Model):
     # Task responsible for creating this credential entry, if any
