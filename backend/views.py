@@ -34,6 +34,7 @@ from backend.serializers import (
     AgentSchemaSerializer,
 )
 from backend.packages import install_agent
+from backend.preprocessor import preprocess_dict
 
 # from backend import models
 # from backend import serializers
@@ -107,16 +108,40 @@ class AgentViewSet(viewsets.ModelViewSet):
     serializer_class = AgentSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["id", "name"]
+    
+    @action(detail=True, methods=['get'])
+    def get_metadata(self, request, pk=None):
+        agent: Agent = self.get_object()
+        
+        # Expects exactly one agent.
+        serializer = AgentSchemaSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        
+        # Pass the agent config schema through the preprocessor
+        metadata = agent.get_agent_metadata()
+        
+        # Attach the protocol metadata as another key
+        metadata['protocol_config'] = agent.get_protocol_metadata()
+        
+        # Return preprocessed dictionary
+        return Response(preprocess_dict(metadata))
 
+    @action(detail=True, methods=['get'])
+    def get_command_metadata(self, request, pk=None):
+        """
+        Return all command metadata *without preprocessing*.
+        
+        This does not support the filtering that the endpoint version of this
+        API endpoint does, since this is intended to be used purely for displaying
+        the available commands of an agent to a user. It is not intended
+        to be used in generating forms.
+        """
+        agent: Agent = self.get_object()
+        return Response(agent.get_command_metadata())
 
 class InstallAgentViewSet(viewsets.ViewSet):
-    """
-    Viewset used to allow users to install agents.
-    
-    This is its own viewset independent from AgentViewSet, primarily because
-    of the 
-    
-    """
     serializer_class = BundleSerializer
 
     # See https://www.reddit.com/r/django/comments/soebxo/rest_frameworks_filefield_how_can_i_force_using/
@@ -140,7 +165,7 @@ class InstallAgentViewSet(viewsets.ViewSet):
         try:
             agent_obj = install_agent(Path(data["bundle_path"].temporary_file_path()))
         except Exception as e:
-            raise ValidationError({"bundle_path": [str(e)]})
+            raise ValidationError({"bundle_path": str(e)})
             # return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = AgentSerializer(agent_obj)
@@ -193,44 +218,44 @@ class CredentialViewSet(viewsets.ModelViewSet):
     # def destroy(self, request, pk=None):
     #     pass
 
-class AgentSchemaViewSet(viewsets.ViewSet):
-    """
-    Use this viewset to retrieve the schemas needed to generate a dynamic form
-    for agent configuration. 
-    
-    
-    This is typically used to grab all of the agent and protocol configuration 
-    needed to construct a payload, which can then be used to issue a POST request
-    to the `/endpoint` endpoint.
-    
-    Note that this viewset runs the *raw* schema in agent.json through the 
-    preprocessor, which may modify the schema by filling in reasonable default
-    values, setting fields as read-only, and removing certain schema elements.
-    """
-    serializer_class = AgentSchemaSerializer
-    
-    # TODO: shouldn't these be part of Agent/EndpointViewSet and just be an
-    # @action(detail=True) instead, so we can actually use the PK? wouldn't that
-    # be like a thousand times easier?
-    
-    # def retrieve(self, request, pk=None):
-    #     queryset = User.objects.all()
-    #     user = get_object_or_404(queryset, pk=pk)
-    #     serializer = UserSerializer(user)
-    #     return Response(serializer.data)
+# class AgentSchemaViewSet(viewsets.ViewSet):
+#     """
+#     Use this viewset to retrieve the schemas needed to generate a dynamic form
+#     for agent configuration. 
 
-class CommandSchemaViewSet(viewsets.ViewSet):
-    """
-    Use this viewset to retrieve the schemas needed to generate a dynamic form
-    for command execution. 
+#     This is typically used to grab all of the agent and protocol configuration 
+#     needed to construct a payload, which can then be used to issue a POST request
+#     to the `/endpoint` endpoint.
     
-    This is typically used to grab all of the command arguments needed to construct 
-    a command request message while simultaneously allowing them to be validated 
-    server-side and in the web interface, *before* they get sent out to the agent. 
-    This provides the user with more immediate feedback than if they received
-    a command error over an hour later.
-    """
-    serializer_class = CommandSchemaSerializer
+#     Note that this viewset runs the *raw* schema in agent.json through the 
+#     preprocessor, which may modify the schema by filling in reasonable default
+#     values, setting fields as read-only, and removing certain schema elements.
+#     """
+#     serializer_class = AgentSchemaSerializer
+    
+#     # TODO: shouldn't these be part of Agent/EndpointViewSet and just be an
+#     # @action(detail=True) instead, so we can actually use the PK? wouldn't that
+#     # be like a thousand times easier?
+    
+#     def retrieve(self, request, pk=None):
+#         raise NotImplementedError
+#         # queryset = User.objects.all()
+#         # user = get_object_or_404(queryset, pk=pk)
+#         # serializer = UserSerializer(user)
+#         # return Response(serializer.data)
+
+# class CommandSchemaViewSet(viewsets.ViewSet):
+#     """
+#     Use this viewset to retrieve the schemas needed to generate a dynamic form
+#     for command execution. 
+    
+#     This is typically used to grab all of the command arguments needed to construct 
+#     a command request message while simultaneously allowing them to be validated 
+#     server-side and in the web interface, *before* they get sent out to the agent. 
+#     This provides the user with more immediate feedback than if they received
+#     a command error over an hour later.
+#     """
+#     serializer_class = CommandSchemaSerializer
     
 class ExecuteCommandViewSet(viewsets.ViewSet):
     """
@@ -298,12 +323,12 @@ class EndpointViewSet(viewsets.ModelViewSet):
 
         if serializer.data["is_virtual"]:
             raise ValidationError(
-                {"is_virtual": ["Virtual endpoints are not yet supported!"]}
+                {"is_virtual": "Virtual endpoints are not yet supported!"}
             )
 
         if not serializer.data["agent"]:
             raise ValidationError(
-                {"agent": ["An agent is required for non-virtual endpoints!"]}
+                {"agent": "An agent is required for non-virtual endpoints!"}
             )
 
         result = tasks.generate_payload.delay(serializer.data, request.user.id)
@@ -317,6 +342,37 @@ class EndpointViewSet(viewsets.ModelViewSet):
         # serializer_tmp = self.serializer_class(tmp)
         # return Response(serializer_tmp.data)
 
+    @action(detail=True, methods=['get'])
+    def get_command_metadata(self, request, pk=None):
+        # Note that we expect an endpoint, not an agent, even though the response
+        # would be the same across two endpoints of the same agent. This is to
+        # emphasize that it should not be possible to get fine-grained, 
+        # preprocessed metadata without a specific endpoint in mind.
+        endpoint: Endpoint = self.get_object()
+        
+        # Verify the endpoint and command are valid...
+        serializer = AgentSchemaSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        
+        metadata = preprocess_dict(endpoint.agent.get_command_metadata())
+        commands = {cmd['name']: cmd for cmd in metadata}
+        
+        command = serializer.data['command']
+        
+        # If no command was specialized, return the full list of commands,
+        # preprocessed
+        if command is None:
+            return Response(metadata)
+        
+        # If a command was specified, but it doesn't exist for this endpoint
+        # (i.e. it doesn't exist for this agent), then raise an error
+        if command not in commands:
+            raise ValidationError({"command": "Command is not valid for this endpoint!"})
+    
+        # Return the selected command, preprocessed
+        return Response(commands[command])
 
 # Files
 class FileViewSet(viewsets.ModelViewSet):

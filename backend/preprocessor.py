@@ -74,6 +74,8 @@ def preprocess_dict(input: dict[str, Any]) -> dict[str, Any]:
             # Perform the action
             action = match.group(1)
             preprocess_router(input, action, value)
+            
+    return input
 
 def preprocess_create_id(input: dict[str, Any], _value: Any) -> None:
     """
@@ -127,5 +129,4 @@ if __name__ == "__main__":
         }
     }
 
-    preprocess_dict(test_d)
-    print(test_d)
+    print(preprocess_dict(test_d))
