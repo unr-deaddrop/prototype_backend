@@ -18,7 +18,7 @@ The following conventions are assumed:
   `message.json` contains the serialized DeadDropMessage to be sent.
 - That once the script returns, the following contents are made available in the
   temporary directory:
-  - message-log.txt, the immediate result of the task
+  - message-logs.txt, the immediate result of the task
   - if RECEIVING a message, messages.json, one or more messages retrieved from the
     protocol handler
   - protocol_state.json, an optional JSON document that allows for state maintenace
@@ -74,7 +74,7 @@ def send_message(
     
     # Assert that the Makefile is present and invoke the message_entry recipe
     
-    # Take message-log.txt and use that as the result, also converting it into a 
+    # Take message-logs.txt and use that as the result, also converting it into a 
     # LogMessage
     
     # If present, read protocol_state.json and update the endpoint accordingly
