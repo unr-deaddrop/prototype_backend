@@ -75,7 +75,10 @@ def generate_payload(
     container in a temporary folder with a random container name.
 
     Note that the keyword arguments `payload_file` and `connections` are ignored
-    when generating physical payloads through this task.
+    when generating physical payloads through this task. That is, if a payload
+    file is specified, it is ignored and replaced by the container-generated
+    payload file instead; if connections are specified, they are deleted and
+    must be added after the fact.
     """
     # It's assumed all of these are coming from the serializer. Flaky, but
     # it works.
@@ -95,3 +98,18 @@ def generate_payload(
     serializer = EndpointSerializer(endpoint)
     return serializer.data
     
+@shared_task
+def execute_command(validated_data: dict[str, Any], user_id: Optional[int]) -> dict[str, Any]:
+    """
+    Execute a command. Again, this is intended to spin up a sibling Docker container
+    in which the agent can construct and send messages in a platform-independent
+    manner.
+    
+    
+    """
+    
+@shared_task
+def receive_message(validated_data: dict[str, Any], user_id: Optional[int]) -> dict[str, Any]:
+    """
+    Start a task to receive a message.
+    """

@@ -258,19 +258,6 @@ class ExecuteCommandViewSet(viewsets.ViewSet):
     """
     #TODO: make this!
 
-# @api_view(['GET'])
-# def credentials(request):
-#     credentials = Credential.objects.all()
-#     serializer = CredentialSerializer(credentials, many=True)
-#     return Response(serializer.data)
-
-# @api_view(['POST'])
-# def addCredential(request):
-#     serializer = CredentialSerializer(data=request.data)
-#     if serializer.is_valid():
-#         serializer.save()
-#     return Response(serializer.data)
-
 
 # Protocols
 class ProtocolViewSet(viewsets.ModelViewSet):
