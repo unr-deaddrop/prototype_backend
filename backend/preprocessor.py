@@ -58,35 +58,6 @@ import uuid
 
 from django.conf import settings
 
-
-def preprocess_dict(input: dict[str, Any]) -> dict[str, Any]:
-    """
-    Recursively process a dictionary.
-    """
-    # The iterator is converted to a tuple so we don't run into the issue of the
-    # dictionary changing size as we pop off keys.
-    for key, value in tuple(input.items()):
-        if isinstance(value, dict):
-            preprocess_dict(value)
-
-        if match := re.match(r'_preprocess_(.*)', key):
-            # Remove the preprocessor key
-            input.pop(key)
-            # Perform the action
-            action = match.group(1)
-            preprocess_router(input, action, value)
-            
-    return input
-
-def preprocess_list(input: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """
-    Preprocess a list of dictionaries.
-    """
-    for item in input:
-        preprocess_dict(item)
-    
-    return input
-
 def preprocess_create_id(input: dict[str, Any], _value: Any) -> None:
     """
     Insert a random UUIDv4, set it as the default for that field, and make it
@@ -107,7 +78,6 @@ def preprocess_settings_val(input: dict[str, Any], value: Any) -> None:
     input['default'] = getattr(settings, value)
     input['readonly'] = True
 
-
 ACTIONS = {
     'create_id': preprocess_create_id,
     'settings_val': preprocess_settings_val,
@@ -125,16 +95,80 @@ def preprocess_router(input: dict[str, Any], action: str, value: Any) -> None:
     preprocess_func = ACTIONS[action]
     preprocess_func(input, value)
 
+def preprocess_anyof(input: dict[str, Any]) -> None:
+    """
+    Convert type-based anyOf fields (the result of Pydantic and optional typing)
+    to a single type field.
+    """
+    assert "anyOf" in input
+    
+    data: list[dict[str, Any]] = input.pop("anyOf")
+    for d in data:
+        if d != {"type": None}:
+            # Prefer the keys of the `anyOf` element over that of the original
+            # parent. I don't think there will be any conflicts, but this ensures
+            # that the entire "type" of the anyOf is preserved after the operation.
+            #
+            # Also, we can't use the nicer syntax because those will create new
+            # dictionaries, rather than operating in-place.
+            input.update(d)
+
+def preprocess_dict(input: dict[str, Any], remove_anyof = True) -> dict[str, Any]:
+    """
+    Recursively process a dictionary.
+    """
+    # The iterator is converted to a tuple so we don't run into the issue of the
+    # dictionary changing size as we pop off keys.
+    for key, value in tuple(input.items()):
+        if isinstance(value, dict):
+            preprocess_dict(value)
+        
+        # This could be better modularized (e.g. put all of these in a class,
+        # call them preprocessor modules, have them all run on key/value/input)
+        if key == "anyOf":
+            preprocess_anyof(input)
+
+        if match := re.match(r'_preprocess_(.*)', key):
+            # Remove the preprocessor key
+            input.pop(key)
+            # Perform the action
+            action = match.group(1)
+            preprocess_router(input, action, value)
+            
+    return input
+
+def preprocess_list(input: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Preprocess a list of dictionaries.
+    """
+    for item in input:
+        preprocess_dict(item)
+    
+    return input
+
 if __name__ == "__main__":
     test_d = {
         "description": "Agent-wide configuration definitions. Includes both non-sensitive and\nsensitive configurations set at runtime.\nSee agent.cfg for more details.",
         "properties": {
             "AGENT_ID": {
-            "_preprocess_create_id": True,
-            "description": "The agent's UUID.",
-            "format": "uuid",
-            "title": "Agent Id",
-            "type": "string"
+                "_preprocess_create_id": True,
+                "description": "The agent's UUID.",
+                "format": "uuid",
+                "title": "Agent Id",
+                "type": "string"
+            },
+            "timeout": {
+                "anyOf": [
+                    {
+                        "type": "integer"
+                    },
+                    {
+                        "type": None
+                    }
+                ],
+                "default": None,
+                "description": "The timeout for the command; returns an empty result on failure.",
+                "title": "Timeout"
             }
         }
     }

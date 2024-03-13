@@ -90,15 +90,15 @@ class TestViewSet(viewsets.ViewSet):
         return Response({"task_id": res.id, "data": result})
 
 
-class SignUpViewSet(viewsets.ViewSet):
-    serializer_class = SignUpSerializer
+# class SignUpViewSet(viewsets.ViewSet):
+    # serializer_class = SignUpSerializer
     # def list(self, request):
     #     queryset = User.objects.all()
     #     serializer = self.serializer_class(queryset, many=True)
     #     return Response(data=serializer.data)
 
-    def create(self, request):
-        return Response({"task_id":res.id, "data": result})
+    # def create(self, request):
+        # return Response({"task_id":res.id, "data": result})
         
 # class SignUpViewSet(viewsets.ViewSet):
 #     serializer_class = SignUpSerializer
