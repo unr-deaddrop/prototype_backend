@@ -47,6 +47,7 @@ logger = logging.getLogger(__name__)
 from django.contrib.auth.models import User
 from django.conf import settings
 from backend.models import Endpoint, Log, Agent
+from django_celery_results.models import TaskResult
 
 from deaddrop_meta.protocol_lib import DeadDropLogLevel
 
@@ -161,9 +162,7 @@ def get_and_save_build_log(
         log = Log(
             source=None,
             user=user,
-            # TODO: This won't work until the shift to the Django backend.
-            # task=task_id, 
-            task=None,
+            task=TaskResult.objects.get(task_id=task_id),
             category="payload-build",
             level=DeadDropLogLevel.INFO,
             timestamp=datetime.now(),
@@ -199,7 +198,7 @@ def get_payload_and_copy(build_dir: Path, agent_id: uuid.UUID, agent: Agent) -> 
         raise RuntimeError(f"Missing payload from {payload_path}!")
 
     media_path = (
-        Path(Endpoint.payload_file.field.upload_to) / f"{str(agent)}-{agent_id}"
+        Path(Endpoint.payload_file.field.upload_to) / f"{str(agent)}-{agent_id}.zip"
     )
     bundle_target = Path(settings.MEDIA_ROOT) / media_path
 
