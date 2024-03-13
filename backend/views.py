@@ -44,31 +44,6 @@ from backend.preprocessor import preprocess_dict, preprocess_list
 # from backend import serializers
 import backend.tasks as tasks
 
-# Create your views here.
-# Users
-# @api_view(['POST'])
-# def signUp(request):
-#     serializer = SignUpSerializer(data=request.data)
-#     if serializer.is_valid():
-#         serializer.save()
-#     return Response(data=serializer.data)
-
-# from rest_framework import generics
-# class SignUpView(generics.GenericAPIView):
-#     serializer_class = SignUpSerializer
-#     def post(self, request):
-#         data = request.data
-#         serializer = self.serializer_class(data=data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             response = {
-#                 "message": "User created",
-#                 "data": serializer.data
-#             }
-#             return Response(data=response, status=status.HTTP_201_CREATED)
-#         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TaskResult.objects.all()
     serializer_class = TaskResultSerializer
@@ -89,37 +64,6 @@ class TestViewSet(viewsets.ViewSet):
 
         return Response({"task_id": res.id, "data": result})
 
-
-# class SignUpViewSet(viewsets.ViewSet):
-    # serializer_class = SignUpSerializer
-    # def list(self, request):
-    #     queryset = User.objects.all()
-    #     serializer = self.serializer_class(queryset, many=True)
-    #     return Response(data=serializer.data)
-
-    # def create(self, request):
-        # return Response({"task_id":res.id, "data": result})
-        
-# class SignUpViewSet(viewsets.ViewSet):
-#     serializer_class = SignUpSerializer
-#     # def list(self, request):
-#     #     queryset = User.objects.all()
-#     #     serializer = self.serializer_class(queryset, many=True)
-#     #     return Response(data=serializer.data)
-    
-#     def create(self, request):
-#         data = request.data
-#         serializer = self.serializer_class(data=data)
-#         if serializer.is_valid():
-#             account = serializer.save()
-#             token = Token.objects.get(user=account).key
-#             response = {
-#                 "message": "User created",
-#                 "token": token,
-#                 "data": serializer.data
-#             }
-#             return Response(data=response, status=status.HTTP_201_CREATED)
-#         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UserViewSet(viewsets.ViewSet):
     queryset = User.objects.all()
@@ -247,16 +191,6 @@ def addAgent(request):
 class CredentialViewSet(viewsets.ModelViewSet):
     queryset = Credential.objects.all()
     serializer_class = CredentialSerializer
-    
-class ExecuteCommandViewSet(viewsets.ViewSet):
-    """
-    Use this viewset to start the tasking for executing a command.
-    
-    This effectively generates two asynchronous tasks - one to execute the command,
-    and another to receive the result of the command. Both tasks are associated with
-    the authenticated user for the request.
-    """
-    #TODO: make this!
 
 
 # Protocols
@@ -372,10 +306,3 @@ class FileViewSet(viewsets.ModelViewSet):
 class LogViewSet(viewsets.ModelViewSet):
     queryset = Log.objects.all()
     serializer_class = LogSerializer
-
-
-# @api_view(['GET'])
-# def logs(request):
-#     logs = Log.objects.all()
-#     serializer = LogSerializer(logs, many=True)
-#     return Response(serializer.data)
