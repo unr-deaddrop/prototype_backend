@@ -26,8 +26,10 @@ MEDIA_URL = '/media/'
 SECRET_KEY = "django-insecure-&h=!n9a_qro&o^zb-^d@_9(avb*cte^dw796a0*0=#b2pp2$!e"
 
 # The server's public and private key as PEM-encoded Ed25519 keys, in base64.
-SERVER_PUBLIC_KEY = ""
-SERVER_PRIVATE_KEY = ""
+# When not set, message signing is not performed (though this is up to the
+# agent's protocols).
+SERVER_PUBLIC_KEY = os.environ.get("SERVER_PUBLIC_KEY", "")
+SERVER_PRIVATE_KEY = os.environ.get("SERVER_PRIVATE_KEY", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
