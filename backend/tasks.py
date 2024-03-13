@@ -99,12 +99,18 @@ def generate_payload(
     return serializer.data
     
 @shared_task
-def execute_command(validated_data: dict[str, Any], user_id: Optional[int]) -> dict[str, Any]:
+def execute_command(
+    validated_data: dict[str, Any], 
+    user_id: Optional[int]
+) -> dict[str, Any]:
     """
     Execute a command. Again, this is intended to spin up a sibling Docker container
     in which the agent can construct and send messages in a platform-independent
     manner.
     
+    It is assumed that `validated_data` is (effectively) the contents of a
+    CommandRequestPayload, which has already been validated by the JSON schema
+    and passed through the preprocessor. This is to ensure that the user receives
     
     """
     

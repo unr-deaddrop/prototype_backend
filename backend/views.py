@@ -289,6 +289,38 @@ class EndpointViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def execute_command(self, request, pk=None):
+        # TODO: Define the serializer. It'll probably just be equal to 
+        # CommandRequestPayload.
+        
+        # Retrieve the JSON schema for this command, do not preprocess; obviously,
+        # fail if the command doesn't exist for this endpoint
+        
+        # Validate the incoming cmd_args against this schema
+        #
+        # Note that we can't use a serializer with a pre-defined schema, as with
+        # https://pypi.org/project/drf-jsonschema/, since the schema is defined
+        # at runtime. There are a few ways to get around this, but the stock
+        # jsonschema is fine. 
+        #
+        # Additionally, note that jsonschema supports the anyOf syntax that is
+        # normally removed by the preprocessor. We pass the raw Pydantic output
+        # to jsonschema, since this does exactly what we want - validation
+        # against the original. The absence of a non-required key is fine, since
+        # when it reaches the agent, it should be assumed None. In our case, this
+        # is guaranteed by Pydantic's model validation.
+        
+        # On failure, immediately return the error. This isn't DRF-compliant as-is,
+        # but the other library above just returns ValidationError.message anyways.
+        # https://python-jsonschema.readthedocs.io/en/latest/errors/
+        
+        # If the command arguments pass, invoke the command execution task.
+        # This also invokes a separate "receive message" subtask, which is started
+        # at the end of the task and runs asynchronously. The user attribution
+        # for the task is the same as the original command execution task.
+        
+        # Return the task ID, which is intended to be used by the frontend
+        # to bring the user to the relevant TaskResult detail page.
+        
         raise NotImplementedError
 
 # Files
