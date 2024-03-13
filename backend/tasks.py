@@ -101,7 +101,8 @@ def generate_payload(
 @shared_task
 def execute_command(
     validated_data: dict[str, Any], 
-    user_id: Optional[int]
+    endpoint_id: str,
+    user_id: Optional[int],
 ) -> dict[str, Any]:
     """
     Execute a command. Again, this is intended to spin up a sibling Docker container
@@ -111,11 +112,36 @@ def execute_command(
     It is assumed that `validated_data` is (effectively) the contents of a
     CommandRequestPayload, which has already been validated by the JSON schema
     and passed through the preprocessor. This is to ensure that the user receives
-    
+    feedback *before* tasking is started.
     """
+    # Associate the current task with the specified user
+    
+    # Construct DeadDropMessage, using CommandRequestPayload
+    
+    # Select the relevant endpoint (and complain if it somehow doesn't exist)
+    
+    # Invoke "send message" operation in the message handler, wait until return
+    
+    # Asynchronously start the receieve_message task
+    
+    # Return raw results from messaging unit
+    raise NotImplementedError
     
 @shared_task
-def receive_message(validated_data: dict[str, Any], user_id: Optional[int]) -> dict[str, Any]:
+def receive_message(
+    validated_data: dict[str, Any], 
+    endpoint_id: str,
+    user_id: Optional[int],
+    request_id: Optional[str]
+) -> dict[str, Any]:
     """
     Start a task to receive a message.
+    
+    validated_data is simply
     """
+    # Associate the current task with the specified user
+    
+    # Select the relevant endpoint (and complain if it somehow doesn't exist)
+    
+    # Invoke "receive message" operation, wait until return; return results as-is
+    raise NotImplementedError
