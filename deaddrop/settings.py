@@ -25,6 +25,10 @@ MEDIA_URL = '/media/'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-&h=!n9a_qro&o^zb-^d@_9(avb*cte^dw796a0*0=#b2pp2$!e"
 
+# The server's public and private key as PEM-encoded Ed25519 keys, in base64.
+SERVER_PUBLIC_KEY = ""
+SERVER_PRIVATE_KEY = ""
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

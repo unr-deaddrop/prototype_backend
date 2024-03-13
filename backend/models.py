@@ -1,12 +1,19 @@
 from typing import Any
+from pathlib import Path
+import json
+import shutil
 import uuid
-import datetime
+
 
 from django.contrib.auth.models import User, Group
 from django.db import models
 from django.urls import reverse
 from django.conf import settings
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+
 from django_celery_results.models import TaskResult
+
 
 # Add an extra field to the TaskResult model called task_creator. This is an FK
 # to Django's stock User field. While allowed to be blank, it is not intended
@@ -24,7 +31,6 @@ TaskResult.add_to_class('task_creator', models.ForeignKey(User, on_delete=models
 # def create_auth_token(sender, instance=None, created=False, **kwargs):
 #     if created:
 #         Token.objects.create(user=instance)
-
 
 class Agent(models.Model):
     name = models.CharField(
@@ -68,27 +74,40 @@ class Agent(models.Model):
             "version",
         )
 
+    def deserialize_package_json(self, package_file: str) -> dict[str, Any]:
+        json_path = (Path(self.package_path)/package_file).resolve()
+        if not json_path.exists():
+            raise RuntimeError(f"{json_path} does not exist in the package directory")
+        with open(json_path, "rt") as fp:
+            return json.load(fp)
+
     # Various helper commands to get the relevant metadata for this agent.
     # Right now, these are just loosely-structured JSON and Python dictionaries;
     # in the future, deaddrop_meta will allow us to validate the metadata and
     # return an actual object with attributes.
-    def get_commands(self) -> dict[str, Any]:
-        raise NotImplementedError
+    def get_command_metadata(self) -> list[dict[str, Any]]:
+        """
+        Get all supported commands and their details for this agent.
+        
+        This simply deserializes commands.json.
+        """
+        return self.deserialize_package_json("commands.json")
 
-    def get_commands_json(self):
-        raise NotImplementedError
-
-    def get_supported_protocols(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    def get_supported_protocols_json(self) -> str:
-        raise NotImplementedError
+    def get_protocol_metadata(self) -> list[dict[str, Any]]:
+        """
+        Get all supported protocols and their details for this agent.
+        
+        This simply deserializes protocols.json.
+        """
+        return self.deserialize_package_json("protocols.json")
 
     def get_agent_metadata(self) -> dict[str, Any]:
-        raise NotImplementedError
-
-    def get_agent_metadata_json(self) -> str:
-        raise NotImplementedError
+        """
+        Get the metadata for the agent.
+        
+        This simply deserializes agent.json and converts it to a dictionary.
+        """
+        return self.deserialize_package_json("agent.json")
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])
@@ -96,6 +115,13 @@ class Agent(models.Model):
     def __str__(self):
         return f"{self.name}-{self.version}"
 
+@receiver(post_delete, sender=Agent)
+def delete_agent_package(sender, instance, using, **kwargs):
+    """
+    On agent deletion, nuke the package path and the original package file.
+    """
+    (Path(settings.MEDIA_ROOT) / Path(instance.package_file.name)).unlink()
+    shutil.rmtree(instance.package_path)
 
 class Protocol(models.Model):
     # Human-readable name

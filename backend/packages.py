@@ -75,16 +75,49 @@ def install_agent(bundle_path: Path) -> Agent:
     # name
     agent_name, agent_version = get_agent_info(package_path)
     internal_name = f"{agent_name}-{agent_version}"
+    
+    # Determine if an agent already exists with this name and version; if it exists,
+    # invoke its delete function if it has no associated endpoints
+    try:
+        # Note that we only get one, since this comprises a unique set
+        existing_agent = Agent.objects.get(name=agent_name, version=agent_version)
+        
+        if not existing_agent.endpoints.all().exists():
+            # Permit the operation to continue.
+            logger.warning(f"Overwriting installed agent {existing_agent}, it has no endpoints")
+            existing_agent.delete()
+        else:
+            # Uh oh
+            raise RuntimeError(
+                f"This installation would overwrite {existing_agent}, which has"
+                " endpoints associated with it"
+            )
+    except Agent.DoesNotExist:
+        # No collision, no problem
+        pass
 
     # Construct the effective final package directory; note that when we uploaded
     # the file to Django, it's a named temporary file; we'll rename it to what it's
     # supposed to be
     final_package_dir = package_path.with_name(internal_name)
+    
+    # If the package already exists, verify that it is not in use by any agents
+    # (even if the package's name has somehow been modified, and therefore not 
+    # caught by the prior agent check; this can also catch if the package
+    # wasn't deleted even when the agent was)
+    if final_package_dir.exists():
+        try:
+            using_agent = Agent.objects.get(package_path=str(final_package_dir))
+        except Agent.DoesNotExist:
+                # Blow it up
+                logger.warning(f"Removing dangling package at {final_package_dir}")
+                shutil.rmtree(final_package_dir, ignore_errors=True)
+        
     try:
         os.rename(package_path, final_package_dir)
     except OSError:
         raise RuntimeError(
-            f"The package seems to already be installed at {final_package_dir}!"
+            f"The package is already installed at {final_package_dir} and is in use by {using_agent}!"
         )
 
     # Copy the original bundle to the media folder
