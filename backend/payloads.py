@@ -87,14 +87,7 @@ def build_payload(
     # Copy the entire package into a temporary directory (note that we don't need
     # to resolve the package path, since it's already correct relative to wherever
     # Django and the workers are running)
-    temp_dir = TemporaryDirectory()
-
-    if not Path(agent.package_path).exists():
-        raise RuntimeError(
-            f"The package at {Path(agent.package_path).resolve()} does not exist!"
-        )
-
-    shutil.copytree(agent.package_path, temp_dir.name, dirs_exist_ok=True)
+    temp_dir = agent.copy_to_temp_dir()
     temp_dir_path = Path(temp_dir.name).resolve()
     logger.info(f"Using {temp_dir_path} for build")
 
@@ -143,6 +136,9 @@ def build_payload(
         **kwargs,
     )
     endpoint.save()
+    
+    # Explicitly blow up the temporary directory.
+    temp_dir.cleanup()
 
     # Return the build result
     return endpoint

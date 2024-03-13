@@ -1,5 +1,6 @@
-from typing import Any
 from pathlib import Path
+from typing import Any, Union
+from tempfile import TemporaryDirectory
 import json
 import shutil
 import uuid
@@ -108,6 +109,29 @@ class Agent(models.Model):
         This simply deserializes agent.json and converts it to a dictionary.
         """
         return self.deserialize_package_json("agent.json")
+    
+    def copy_to_temp_dir(self) -> Union[TemporaryDirectory, None]:
+        """
+        Copy the agent package to a temporary directory and return the TemporaryDirectory
+        object.
+        
+        If no package has been specified for this agent, this returns None.
+        
+        If a package has been specified, but it is not available, this raises
+        RuntimeError.
+        """
+        temp_dir = TemporaryDirectory()
+        
+        if not self.package_path:
+            return None
+        
+        package_path = Path(self.package_path).resolve()
+        if not package_path.exists():
+            raise RuntimeError(f"{self} uses {package_path}, but that folder doesn't exist!")
+
+        shutil.copytree(package_path, temp_dir.name, dirs_exist_ok=True)
+        
+        return temp_dir
 
     def get_absolute_url(self):
         return reverse("agent-detail", args=[str(self.id)])
@@ -174,8 +198,12 @@ class Endpoint(models.Model):
         Agent, on_delete=models.PROTECT, related_name="endpoints", blank=True, null=True
     )
 
-    # Agent-specific configuration object.
+    # Agent-specific configuration object. Should be read-only after set.
     agent_cfg = models.JSONField(blank=True, null=True)
+
+    # Protocol state object used to allow the agent to change its protocol 
+    # execution across calls.
+    protocol_state = models.JSONField(blank=True, null=True)
 
     # What other endpoints does this endpoint have direct access to?
     # FIXME: this may be wrong according to https://stackoverflow.com/questions/39821723/django-rest-framework-many-to-many-field-related-to-itself
