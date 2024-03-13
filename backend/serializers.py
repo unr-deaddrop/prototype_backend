@@ -120,7 +120,7 @@ class CommandSchemaSerializer(serializers.Serializer):
     with an endpoint, or a specific command for that endpoint.
     """
     # endpoint = serializers.UUIDField() # PK of the endpoint, a UUID
-    endpoint = EndpointSerializer(read_only=True)
+    # endpoint = EndpointSerializer(read_only=True)
     command = serializers.CharField(required=False) # By command name, optional
 
 class AgentSchemaSerializer(serializers.Serializer):

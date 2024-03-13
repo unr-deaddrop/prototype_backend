@@ -34,7 +34,7 @@ from backend.serializers import (
     AgentSchemaSerializer,
 )
 from backend.packages import install_agent
-from backend.preprocessor import preprocess_dict
+from backend.preprocessor import preprocess_dict, preprocess_list
 
 # from backend import models
 # from backend import serializers
@@ -342,7 +342,8 @@ class EndpointViewSet(viewsets.ModelViewSet):
         # serializer_tmp = self.serializer_class(tmp)
         # return Response(serializer_tmp.data)
 
-    @action(detail=True, methods=['get'])
+    # really, this should be a GET request, but i think the interface is "cleaner"
+    @action(detail=True, methods=['post'])
     def get_command_metadata(self, request, pk=None):
         # Note that we expect an endpoint, not an agent, even though the response
         # would be the same across two endpoints of the same agent. This is to
@@ -351,23 +352,23 @@ class EndpointViewSet(viewsets.ModelViewSet):
         endpoint: Endpoint = self.get_object()
         
         # Verify the endpoint and command are valid...
-        serializer = AgentSchemaSerializer(data=request.data)
+        print(request.data)
+        serializer = CommandSchemaSerializer(data=request.data)
         
         if not serializer.is_valid():
             return Response(serializer.errors)
         
-        metadata = preprocess_dict(endpoint.agent.get_command_metadata())
+        metadata = preprocess_list(endpoint.agent.get_command_metadata())
         commands = {cmd['name']: cmd for cmd in metadata}
-        
-        command = serializer.data['command']
         
         # If no command was specialized, return the full list of commands,
         # preprocessed
-        if command is None:
+        if 'command' not in serializer.data:
             return Response(metadata)
         
         # If a command was specified, but it doesn't exist for this endpoint
         # (i.e. it doesn't exist for this agent), then raise an error
+        command = serializer.data['command']
         if command not in commands:
             raise ValidationError({"command": "Command is not valid for this endpoint!"})
     

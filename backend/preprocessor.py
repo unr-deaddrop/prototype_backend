@@ -58,6 +58,7 @@ import uuid
 
 from django.conf import settings
 
+
 def preprocess_dict(input: dict[str, Any]) -> dict[str, Any]:
     """
     Recursively process a dictionary.
@@ -75,6 +76,15 @@ def preprocess_dict(input: dict[str, Any]) -> dict[str, Any]:
             action = match.group(1)
             preprocess_router(input, action, value)
             
+    return input
+
+def preprocess_list(input: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Preprocess a list of dictionaries.
+    """
+    for item in input:
+        preprocess_dict(item)
+    
     return input
 
 def preprocess_create_id(input: dict[str, Any], _value: Any) -> None:

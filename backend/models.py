@@ -76,19 +76,19 @@ class Agent(models.Model):
     # Right now, these are just loosely-structured JSON and Python dictionaries;
     # in the future, deaddrop_meta will allow us to validate the metadata and
     # return an actual object with attributes.
-    def get_command_metadata(self) -> dict[str, Any]:
+    def get_command_metadata(self) -> list[dict[str, Any]]:
         """
         Get all supported commands and their details for this agent.
         
-        This simply deserializes commands.json and converts it to a dictionary.
+        This simply deserializes commands.json.
         """
         return self.deserialize_package_json("commands.json")
 
-    def get_protocol_metadata(self) -> dict[str]:
+    def get_protocol_metadata(self) -> list[dict[str, Any]]:
         """
         Get all supported protocols and their details for this agent.
         
-        This simply deserializes protocols.json and converts it to a dictionary.
+        This simply deserializes protocols.json.
         """
         return self.deserialize_package_json("protocols.json")
 
