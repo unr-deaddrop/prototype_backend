@@ -247,69 +247,6 @@ def addAgent(request):
 class CredentialViewSet(viewsets.ModelViewSet):
     queryset = Credential.objects.all()
     serializer_class = CredentialSerializer
-
-    # @action(detail=False, methods=['post'])
-    # def celery(self, request):
-    #     tasks.task23.delay(data=request.data)
-    #     return Response(data={'key2':'val2'})
-
-    # def list(self, request):
-    #     serializer = self.get_serializer(self.get_queryset(), many=True)
-    #     return self.get_paginated_response(self.paginate_queryset(serializer.data))
-
-    # def create(self, *args, **kwargs):
-    #     return super().create(*args, **kwargs)
-
-    # def retrieve(self, request, pk=None):
-    #     pass
-
-    # def update(self, request, pk=None):
-    #     pass
-
-    # def partial_update(self, request, pk=None):
-    #     pass
-
-    # def destroy(self, request, pk=None):
-    #     pass
-
-# class AgentSchemaViewSet(viewsets.ViewSet):
-#     """
-#     Use this viewset to retrieve the schemas needed to generate a dynamic form
-#     for agent configuration. 
-
-#     This is typically used to grab all of the agent and protocol configuration 
-#     needed to construct a payload, which can then be used to issue a POST request
-#     to the `/endpoint` endpoint.
-    
-#     Note that this viewset runs the *raw* schema in agent.json through the 
-#     preprocessor, which may modify the schema by filling in reasonable default
-#     values, setting fields as read-only, and removing certain schema elements.
-#     """
-#     serializer_class = AgentSchemaSerializer
-    
-#     # TODO: shouldn't these be part of Agent/EndpointViewSet and just be an
-#     # @action(detail=True) instead, so we can actually use the PK? wouldn't that
-#     # be like a thousand times easier?
-    
-#     def retrieve(self, request, pk=None):
-#         raise NotImplementedError
-#         # queryset = User.objects.all()
-#         # user = get_object_or_404(queryset, pk=pk)
-#         # serializer = UserSerializer(user)
-#         # return Response(serializer.data)
-
-# class CommandSchemaViewSet(viewsets.ViewSet):
-#     """
-#     Use this viewset to retrieve the schemas needed to generate a dynamic form
-#     for command execution. 
-    
-#     This is typically used to grab all of the command arguments needed to construct 
-#     a command request message while simultaneously allowing them to be validated 
-#     server-side and in the web interface, *before* they get sent out to the agent. 
-#     This provides the user with more immediate feedback than if they received
-#     a command error over an hour later.
-#     """
-#     serializer_class = CommandSchemaSerializer
     
 class ExecuteCommandViewSet(viewsets.ViewSet):
     """
@@ -428,6 +365,10 @@ class EndpointViewSet(viewsets.ModelViewSet):
     
         # Return the selected command, preprocessed
         return Response(commands[command])
+
+    @action(detail=True, methods=['post'])
+    def execute_command(self, request, pk=None):
+        raise NotImplementedError
 
 # Files
 class FileViewSet(viewsets.ModelViewSet):
