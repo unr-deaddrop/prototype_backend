@@ -197,9 +197,7 @@ class AgentViewSet(viewsets.ModelViewSet):
         return Response(agent.get_command_metadata())
 
     @action(detail=False, methods=['get'])
-    def get_agent_stats(self, request):
-        Agent.objects.all()
-        
+    def get_agent_stats(self, request):        
         agents = Agent.objects.annotate(num_endpoints=Count('endpoints'))
         return Response(
             {
