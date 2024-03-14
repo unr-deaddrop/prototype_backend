@@ -172,23 +172,26 @@ if __name__ == "__main__":
                 "description": "The timeout for the command; returns an empty result on failure.",
                 "title": "Timeout"
             }
-        }
+        },
+        "required" : ['timeout']
+        
     }
 
-    data = {'timeout': None}
+    data = {}
 
     # Test validation without preprocessing
     validator = jsonschema.Draft202012Validator(test_schema)
     if not validator.is_valid(data):    
         errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
-        print(errors)
+        for error in errors:
+            print(error.validator_value)
 
-    print(preprocess_dict(test_schema))
+    # print(preprocess_dict(test_schema))
     
-    # Test validation with preprocessing, emulate 
-    errors = {}
-    validator = jsonschema.Draft202012Validator(test_schema)
-    if not validator.is_valid(data): 
-        for error in validator.iter_errors(data):
-            errors[error.relative_path[-1]] = error.message
-    print(errors)
+    # # Test validation with preprocessing, emulate 
+    # errors = {}
+    # validator = jsonschema.Draft202012Validator(test_schema)
+    # if not validator.is_valid(data): 
+    #     for error in validator.iter_errors(data):
+    #         errors[error.relative_path[-1]] = error.message
+    # print(errors)
