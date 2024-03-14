@@ -267,7 +267,6 @@ class EndpointViewSet(viewsets.ModelViewSet):
         endpoint: Endpoint = self.get_object()
         
         # Verify the endpoint and command are valid...
-        print(request.data)
         serializer = CommandSchemaSerializer(data=request.data)
         
         if not serializer.is_valid():
@@ -292,7 +291,7 @@ class EndpointViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def execute_command(self, request, pk=None):
-        serializer = CommandSerializer(request.data)
+        serializer = CommandSerializer(data=request.data)
         endpoint: Endpoint = self.get_object()
         
         if not serializer.is_valid():
@@ -322,15 +321,22 @@ class EndpointViewSet(viewsets.ModelViewSet):
         # when it reaches the agent, it should be assumed None. In our case, this
         # is guaranteed by Pydantic's model validation. Not necessarily true
         # for other libraries in other languages, but that's outside our scope.
-        command_schema = commands[cmd_name]
+        command_schema = commands[cmd_name]['argument_schema']
+        print(command_schema)
+        print(cmd_args)
         validator = jsonschema.Draft202012Validator(command_schema)
         
         # Construct a validation error specifying failing fields that are
-        # *close enough* to DRF's n ative format.
+        # *close enough* to DRF's native format. When no 
         if not validator.is_valid(cmd_args):
-            errors = {}
+            errors = {
+                'global': [] # When tied to the overall schema
+            }
             for error in validator.iter_errors(cmd_args):
-                errors[error.relative_path[-1]] = error.message
+                if not error.relative_path:
+                    errors['global'].append(error.message)
+                else:
+                    errors[error.relative_path[-1]] = error.message
             raise ValidationError(errors)
         
         # If the command arguments pass, invoke the command execution task.
