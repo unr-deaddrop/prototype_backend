@@ -13,6 +13,7 @@ from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.db.models import Count
 
 from backend.models import (
     Agent,
@@ -194,6 +195,18 @@ class AgentViewSet(viewsets.ModelViewSet):
         """
         agent: Agent = self.get_object()
         return Response(agent.get_command_metadata())
+
+    @action(detail=False, methods=['get'])
+    def get_agent_stats(self, request):
+        Agent.objects.all()
+        
+        agents = Agent.objects.annotate(num_endpoints=Count('endpoints'))
+        return Response(
+            {
+                "labels": [agent.name for agent in agents],
+                "values": [agent.num_endpoints for agent in agents]
+            }
+        )
 
 class InstallAgentViewSet(viewsets.ViewSet):
     serializer_class = BundleSerializer
