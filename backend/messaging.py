@@ -8,6 +8,11 @@ The messaging system works by assuming that a package contains a message_entry
 recipe exists in the agent's Makefile. The entire package is copied to a temporary
 directory before execution.
 
+Additionally, note that this module *alone* is responsible for committing Message
+instances to the database. This allows us to centralize where Messages are coming
+from and keep track of where they're being spawned from.
+
+
 The following conventions are assumed:
 - That a Makefile exists, and that a `message_entry` recipe exists;
 - That the called script leverages a `message_config.json` that is used to call
@@ -52,11 +57,15 @@ from django.contrib.auth.models import User
 from backend.models import Endpoint, Log, Message
 from django_celery_results.models import TaskResult
 from django.conf import settings
+from django.db import IntegrityError
+
+from pydantic import TypeAdapter
 
 logger = logging.getLogger(__name__)
 
 LOG_FILE_NAME = "message-logs.txt"
 PROTOCOL_STATE_NAME = "protocol_state.json"
+MESSAGE_OUTPUT_NAME = "messages.json"
 
 def send_message(
     msg: DeadDropMessage,
@@ -67,6 +76,11 @@ def send_message(
     """
     Send the provided message to an endpoint.
     """
+    # Commit the message to the database. If the message has already been sent
+    # before, it will need to be sent with a new ID; this WILL raise an error.
+    Message.from_deaddrop_message(msg).save()
+    
+    # Invoke the message handler.
     temp_dir = invoke_message_handler("send", endpoint, msg)
     temp_dir_path = Path(temp_dir.name).resolve()
     
@@ -104,9 +118,18 @@ def receive_messages(
     If specified, request_id may be used to filter incoming messages to just
     the message specified. This only works if the message has a 
     CommandResponsePayload; all other messages are unconditionally dropped
-    when request_id is specified.
+    *from the result* when request_id is specified.
+    
+    Even when request_id is specified, Message instances are unconditionally
+    committed to the database, so long as they are received from the agent.
+    Duplicate messages are simply dropped; they do not raise exceptions.
+    
+    Finally, note that it is expected that the agent code perform any form
+    of validation. It is assumed that if a message appears in messages.json,
+    it has already been validated; evidently forged messages should be excluded
+    from messages.json, but should be mentioned in the resulting log output.
     """
-    temp_dir = invoke_message_handler("receieve", endpoint)
+    temp_dir = invoke_message_handler("receieve", endpoint, listen_id=request_id)
     temp_dir_path = Path(temp_dir.name).resolve()
     
     # Take message-logs.txt and use that as the result, also converting it into a 
@@ -117,7 +140,17 @@ def receive_messages(
     update_protocol_state(temp_dir_path, endpoint)
     
     # Take messages.json and construct DeadDrop messages from it
-    result = read_message_json(temp_dir_path)
+    tmp_result = read_message_json(temp_dir_path)
+    
+    # For each DeadDropMessage, create and commit a new Message; ignore if it 
+    # already exists
+    result = []
+    for msg in tmp_result:
+        try:
+            Message.from_deaddrop_message(msg).save()
+            result.append(msg)
+        except IntegrityError:
+            logger.warning(f"Received {msg.message_id=}, assuming duplicate and dropping")
     
     # Blow up the temporary directory
     temp_dir.cleanup()
@@ -173,12 +206,11 @@ def invoke_message_handler(
     with open((temp_dir_path / "message_config.json"), "wt+") as fp:
         fp.write(msg_obj.model_dump_json())
     
-    # Dump the DeadDropMessage as message.json into the temporary directory; 
-    # create an entry for it in the Message model, if one is set.
+    # Dump the DeadDropMessage as message.json into the temporary directory.
     if msg:
         with open((temp_dir_path / "message.json"), "wt+") as fp:
             fp.write(msg.model_dump_json())
-        Message.from_deaddrop_message(msg).save()
+        
     
     # Assert that the Makefile is present and invoke the message_entry recipe
     target = temp_dir_path / "Makefile"
@@ -233,4 +265,28 @@ def update_protocol_state(
 def read_message_json(
     temp_dir: Path
 ) -> list[DeadDropMessage]:
-    raise NotImplementedError
+    """
+    Read the message JSON. 
+    
+    The *absence* of the JSON file is considered an error and raises RuntimeError.
+    If no messsages were retrieved, the JSON file should simply be an empty list.
+    """
+    message_path = temp_dir / MESSAGE_OUTPUT_NAME
+    
+    if not message_path.exists():
+        raise RuntimeError(f"Missing message.json from expected message output at {message_path}")
+    
+    with open(message_path, "rt") as fp:
+        data = fp.read()
+        
+    if not isinstance(data, list):
+        raise RuntimeError(f"Expected list of messages from message.json, got {data}")
+    
+    # For each item, convert to DeadDropMessage
+    # See https://stackoverflow.com/questions/55762673/how-to-parse-list-of-models-with-pydantic
+    ta = TypeAdapter(list[DeadDropMessage])
+    msgs = ta.validate_json(data)
+    
+    return msgs
+    
+    

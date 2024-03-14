@@ -354,7 +354,13 @@ class EndpointViewSet(viewsets.ModelViewSet):
     # caching is NOT valid and this has side effects.
     @action(detail=True, methods=['get'])
     def get_messages(self, request, pk=None):
-        raise NotImplementedError
+        """
+        Start a task to get all new messages from an endpoint.
+        """
+        endpoint: Endpoint = self.get_object()
+        result = tasks.receive_messages.delay(str(endpoint.id), request.user.id, None)
+        return Response({"task_id": result.id})
+        
 
 # Files
 class FileViewSet(viewsets.ModelViewSet):

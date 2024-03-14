@@ -249,6 +249,7 @@ class Message(models.Model):
     message_id = models.UUIDField(primary_key=True, editable=False)
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
     source = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
+    destination = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
     timestamp = models.DateTimeField()
     payload = models.JSONField()
     message_type = models.CharField(choices=message_types, max_length=50)
@@ -261,6 +262,7 @@ class Message(models.Model):
         """
         user = None
         source = None
+        destination = None
         
         try:
             user = User.objects.get(id=msg.user_id)
@@ -272,6 +274,10 @@ class Message(models.Model):
         except Endpoint.DoesNotExist:
             pass
         
+        try:
+            destination = Endpoint.objects.get(id=msg.destination_id)
+        except Endpoint.DoesNotExist:
+            pass
         
         # Note that there is a nonzero chance that the contents of the message are not 
         # Django-serializable but *are* Pydantic-serializable. I don't think we'll run
@@ -281,6 +287,7 @@ class Message(models.Model):
             message_id = msg.message_id,
             user = user,
             source = source,
+            destination = destination,
             timestamp = msg.timestamp,
             payload = msg.payload.model_dump_json(),
             message_type = msg.payload.message_type,

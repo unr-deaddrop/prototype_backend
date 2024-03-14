@@ -45,18 +45,30 @@ def create_task_result_on_publish(sender=None, headers=None, body=None, **kwargs
         task_kwargs='"'+headers["kwargsrepr"]+'"',
     )
 
-def add_user_id_to_task(user_id: Optional[int]) -> None:
+def add_user_id_to_task(user_id: Optional[int]) -> Optional[User]:
     """
     Add a user ID to the current TaskResult object.
+    
+    If no user is set, nothing happens and this returns None. If a user is set,
+    the corresponding user is returned.
+    
+    If the user does not exist, this does not catch the exception;
+    `User.DoesNotExist` is raised.
     """
     # Get the current task ID. Use this to query the TaskResult database, which
     # should already have had an entry made (since the signal is before_task_publish,
     # the code should not get this far without the call having been made).
-    if user_id:
-        task_id = current_task.request.id
-        task_result = TaskResult.objects.get(task_id=task_id)
-        task_result.task_creator = User.objects.get(id=user_id)
-        task_result.save()
+    if user_id is None:
+        return None
+        
+    user = User.objects.get(id=user_id)
+    
+    task_id = current_task.request.id
+    task_result = TaskResult.objects.get(task_id=task_id)
+    task_result.task_creator = user
+    task_result.save()
+    
+    return user
 
 @shared_task
 def test_connection() -> str:
@@ -85,15 +97,12 @@ def generate_payload(
     """
     # It's assumed all of these are coming from the serializer. Flaky, but
     # it works.
-    add_user_id_to_task(user_id)
+    user = add_user_id_to_task(user_id)
     
     # Extract the fields used throughout the build process and remove them from
     # the dictionary. The remaining fields are passed into the Endpoint constructor
     # as-is.
     agent = Agent.objects.get(id=validated_data.pop("agent"))
-    user = None
-    if user_id:
-        user = User.objects.get(id=user_id)
     build_args = validated_data.pop("agent_cfg")
 
     task_id = current_task.request.id
@@ -105,7 +114,7 @@ def generate_payload(
 def execute_command(
     validated_data: dict[str, Any], 
     endpoint_id: str,
-    user_id: Optional[int],
+    user_id: Optional[int] = None,
 ) -> dict[str, Any]:
     """
     Execute a command. Again, this is intended to spin up a sibling Docker container
@@ -118,30 +127,32 @@ def execute_command(
     feedback *before* tasking is started.
     """
     # Associate the current task with the specified user
-    add_user_id_to_task(user_id)
-    user: Optional[User] = None
-    if user_id:
-        user = User.objects.get(id=user_id)
-    
-    # Construct DeadDropMessage, using CommandRequestPayload. Note that:
-    # - The default factory for the message ID is used
-    # - No source ID is specified, so it is implied that it comes from the server
-    # - The current timestamp is used
-    # - The message is NOT signed; it is up to the package to do this
-    msg = DeadDropMessage(
-        user_id = user_id,
-        payload = CommandRequestPayload(
-            message_type = DeadDropMessageType.CMD_REQUEST,
-            cmd_name = validated_data['cmd_name'],
-            cmd_args = validated_data['cmd_args']
-        )
-    )
+    user = add_user_id_to_task(user_id)
     
     # Select the relevant endpoint (and complain if it somehow doesn't exist)
     try:
         endpoint: Endpoint = Endpoint.objects.get(id=endpoint_id)
     except Endpoint.DoesNotExist:
         raise RuntimeError(f"The endpoint {endpoint_id=} does not exist!")
+    
+    # Construct DeadDropMessage, using CommandRequestPayload. Note that:
+    # - The default factory for the message ID is used
+    # - No source ID is specified, so it is implied that it comes from the server
+    # - The current timestamp is used
+    # - The message is NOT signed; it is up to the package to do this
+    #
+    # Note that we do not create a Message instance, since this is handled
+    # by message handling system. Our only job is to construct the message, not
+    # commit it to the database.
+    msg = DeadDropMessage(
+        user_id = user_id,
+        payload = CommandRequestPayload(
+            message_type = DeadDropMessageType.CMD_REQUEST,
+            cmd_name = validated_data['cmd_name'],
+            cmd_args = validated_data['cmd_args']
+        ),
+        destination_id = endpoint_id
+    )
     
     # Invoke "send message" operation in the message handler, wait until return
     task_id = current_task.request.id
@@ -156,8 +167,8 @@ def execute_command(
 @shared_task
 def receive_messages(
     endpoint_id: str,
-    user_id: Optional[int],
-    request_id: Optional[str]
+    user_id: Optional[int] = None,
+    request_id: Optional[str] = None
 ) -> dict[str, Any]:
     """
     Start a task to receive all messages from an endpoint.
@@ -167,7 +178,7 @@ def receive_messages(
     needed.
     """
     # Associate the current task with the specified user
-    add_user_id_to_task(user_id)
+    user = add_user_id_to_task(user_id)
     
     # Select the relevant endpoint (and complain if it somehow doesn't exist)
     try:
@@ -176,4 +187,5 @@ def receive_messages(
         raise RuntimeError(f"The endpoint {endpoint_id=} does not exist!")
     
     # Invoke "receive message" operation, wait until return; return results as-is
-    return messaging.receive_messages(endpoint, request_id)
+    task_id = current_task.request.id
+    return messaging.receive_messages(endpoint, request_id, task_id, user)
