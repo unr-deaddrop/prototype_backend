@@ -251,7 +251,7 @@ class Message(models.Model):
     source = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
     timestamp = models.DateTimeField()
     payload = models.JSONField()
-    message_type = models.CharField(choices=message_types)
+    message_type = models.CharField(choices=message_types, max_length=50)
     digest = models.BinaryField(blank=True, null=True)
     
     @classmethod

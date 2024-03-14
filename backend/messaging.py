@@ -45,8 +45,6 @@ import json
 import logging
 import subprocess
 
-from pydantic import BaseModel
-
 from deaddrop_meta.protocol_lib import DeadDropMessage, DeadDropLogLevel
 from deaddrop_meta.interface_lib import MessagingObject, EndpointMessagingData, ServerMessagingData
 
@@ -131,6 +129,7 @@ def invoke_message_handler(
     action: Union[Literal["send"], Literal["receive"]],
     endpoint: Endpoint,
     msg: Optional[DeadDropMessage] = None,
+    listen_id: Optional[str] = None
 ) -> TemporaryDirectory:
     """
     Invoke the message handler. 
@@ -159,15 +158,15 @@ def invoke_message_handler(
         agent_config=endpoint.agent_cfg['agent_config'],
         protocol_config=endpoint.agent_cfg['protocol_config'],
         protocol_state=endpoint.protocol_state,
-        model_data = EndpointMessagingData(
+        endpoint_model_data = EndpointMessagingData(
             name=endpoint.name,
             hostname = endpoint.hostname,
             address= endpoint.address
         ),
         server_config = ServerMessagingData(
             action=action,
-            listen_for_id=None,
-            server_private_key=settings.SERVER_PRIVATE_KEY,
+            listen_for_id=listen_id,
+            server_private_key=settings.SERVER_PRIVATE_KEY if action == "send" else None,
             preferred_protocol=None
         )
     )

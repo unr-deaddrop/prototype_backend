@@ -18,7 +18,7 @@ import backend.messaging as messaging
 import backend.payloads as payloads
 
 
-from deaddrop_meta.protocol_lib import DeadDropMessage
+from deaddrop_meta.protocol_lib import DeadDropMessage, CommandRequestPayload, DeadDropMessageType
 
 logger = logging.getLogger(__name__)
 
@@ -123,8 +123,19 @@ def execute_command(
     if user_id:
         user = User.objects.get(id=user_id)
     
-    # Construct DeadDropMessage, using CommandRequestPayload
-    msg = DeadDropMessage()
+    # Construct DeadDropMessage, using CommandRequestPayload. Note that:
+    # - The default factory for the message ID is used
+    # - No source ID is specified, so it is implied that it comes from the server
+    # - The current timestamp is used
+    # - The message is NOT signed; it is up to the package to do this
+    msg = DeadDropMessage(
+        user_id = user_id,
+        payload = CommandRequestPayload(
+            message_type = DeadDropMessageType.CMD_REQUEST,
+            cmd_name = validated_data['cmd_name'],
+            cmd_args = validated_data['cmd_args']
+        )
+    )
     
     # Select the relevant endpoint (and complain if it somehow doesn't exist)
     try:
