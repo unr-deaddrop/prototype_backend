@@ -11,11 +11,14 @@ from celery.signals import before_task_publish
 from django_celery_results.models import TaskResult
 
 from backend.models import Agent, Endpoint
-from backend.payloads import build_payload
+from backend.serializers import EndpointSerializer
 from django.contrib.auth.models import User
 from django.db.models.query import QuerySet
+import backend.messaging as messaging
+import backend.payloads as payloads
 
-from backend.serializers import EndpointSerializer
+
+from deaddrop_meta.protocol_lib import DeadDropMessage
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +97,7 @@ def generate_payload(
     build_args = validated_data.pop("agent_cfg")
 
     task_id = current_task.request.id
-    endpoint = build_payload(agent, build_args, task_id, user, **validated_data)
+    endpoint = payloads.build_payload(agent, build_args, task_id, user, **validated_data)
     serializer = EndpointSerializer(endpoint)
     return serializer.data
     
@@ -115,33 +118,51 @@ def execute_command(
     feedback *before* tasking is started.
     """
     # Associate the current task with the specified user
+    add_user_id_to_task(user_id)
+    user: Optional[User] = None
+    if user_id:
+        user = User.objects.get(id=user_id)
     
     # Construct DeadDropMessage, using CommandRequestPayload
+    msg = DeadDropMessage()
     
     # Select the relevant endpoint (and complain if it somehow doesn't exist)
+    try:
+        endpoint: Endpoint = Endpoint.objects.get(id=endpoint_id)
+    except Endpoint.DoesNotExist:
+        raise RuntimeError(f"The endpoint {endpoint_id=} does not exist!")
     
     # Invoke "send message" operation in the message handler, wait until return
+    task_id = current_task.request.id
+    result = messaging.send_message(msg, endpoint, task_id, user)
     
     # Asynchronously start the receieve_message task
+    receive_messages.delay(endpoint_id, user_id, msg.message_id)
     
     # Return raw results from messaging unit
-    raise NotImplementedError
+    return result
     
 @shared_task
-def receive_message(
-    validated_data: dict[str, Any], 
+def receive_messages(
     endpoint_id: str,
     user_id: Optional[int],
     request_id: Optional[str]
 ) -> dict[str, Any]:
     """
-    Start a task to receive a message.
+    Start a task to receive all messages from an endpoint.
     
-    validated_data is simply
+    The immediate result of this task is simply a list of message IDs. These
+    can be inspected through the corresponding Message or Log instances as
+    needed.
     """
     # Associate the current task with the specified user
+    add_user_id_to_task(user_id)
     
     # Select the relevant endpoint (and complain if it somehow doesn't exist)
+    try:
+        endpoint: Endpoint = Endpoint.objects.get(id=endpoint_id)
+    except Endpoint.DoesNotExist:
+        raise RuntimeError(f"The endpoint {endpoint_id=} does not exist!")
     
     # Invoke "receive message" operation, wait until return; return results as-is
-    raise NotImplementedError
+    return messaging.receive_messages(endpoint, request_id)

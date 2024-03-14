@@ -244,17 +244,14 @@ class Message(models.Model):
     """
     # This generally should not change very often, so this is valid.
     # By convention, deaddrop_meta should never *remove* existing message types.
-    MessageTypes = models.TextChoices(
-        'MessageTypes',
-        [(mtype.name, mtype.value) for mtype in DeadDropMessageType]
-    )
+    message_types = [(mtype.name, mtype.value) for mtype in DeadDropMessageType]
     
     message_id = models.UUIDField(primary_key=True, editable=False)
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
     source = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
     timestamp = models.DateTimeField()
     payload = models.JSONField()
-    message_type = models.CharField(choices=MessageTypes)
+    message_type = models.CharField(choices=message_types)
     digest = models.BinaryField(blank=True, null=True)
     
     @classmethod

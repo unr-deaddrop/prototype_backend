@@ -125,3 +125,10 @@ class CommandSchemaSerializer(serializers.Serializer):
 class AgentSchemaSerializer(serializers.Serializer):
     # agent = serializers.IntegerField() # PK of agent
     agent = AgentSerializer(read_only=True)
+    
+    
+class CommandSerializer(serializers.Serializer):
+    # The command name.
+    cmd_name = serializers.CharField(required=True)
+    # The unvalidated command arguments.
+    cmd_args = serializers.JSONField(required=True)

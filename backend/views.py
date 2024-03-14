@@ -36,6 +36,7 @@ from backend.serializers import (
     TaskResultSerializer,
     CommandSchemaSerializer,
     AgentSchemaSerializer,
+    CommandSerializer
 )
 from backend.packages import install_agent
 from backend.preprocessor import preprocess_dict, preprocess_list
@@ -43,6 +44,8 @@ from backend.preprocessor import preprocess_dict, preprocess_list
 # from backend import models
 # from backend import serializers
 import backend.tasks as tasks
+
+import jsonschema
 
 class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TaskResult.objects.all()
@@ -289,11 +292,21 @@ class EndpointViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def execute_command(self, request, pk=None):
-        # TODO: Define the serializer. It'll probably just be equal to 
-        # CommandRequestPayload.
+        serializer = CommandSerializer(request.data)
+        endpoint: Endpoint = self.get_object()
         
-        # Retrieve the JSON schema for this command, do not preprocess; obviously,
-        # fail if the command doesn't exist for this endpoint
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        
+        cmd_name = serializer.data['cmd_name']
+        cmd_args = serializer.data['cmd_args']
+        
+        # Retrieve the JSON schema for this command, do not preprocess. Fail
+        # if the command isn't found.
+        command_metadata = endpoint.agent.get_command_metadata()
+        commands = {cmd['name']: cmd for cmd in command_metadata}
+        if cmd_name not in commands:
+            raise ValidationError({"cmd_name": "Command is not valid for this endpoint!"})
         
         # Validate the incoming cmd_args against this schema
         #
@@ -307,20 +320,34 @@ class EndpointViewSet(viewsets.ModelViewSet):
         # to jsonschema, since this does exactly what we want - validation
         # against the original. The absence of a non-required key is fine, since
         # when it reaches the agent, it should be assumed None. In our case, this
-        # is guaranteed by Pydantic's model validation.
+        # is guaranteed by Pydantic's model validation. Not necessarily true
+        # for other libraries in other languages, but that's outside our scope.
+        command_schema = commands[cmd_name]
+        validator = jsonschema.Draft202012Validator(command_schema)
         
-        # On failure, immediately return the error. This isn't DRF-compliant as-is,
-        # but the other library above just returns ValidationError.message anyways.
-        # https://python-jsonschema.readthedocs.io/en/latest/errors/
+        # Construct a validation error specifying failing fields that are
+        # *close enough* to DRF's n ative format.
+        if not validator.is_valid(cmd_args):
+            errors = {}
+            for error in validator.iter_errors(cmd_args):
+                errors[error.relative_path[-1]] = error.message
+            raise ValidationError(errors)
         
         # If the command arguments pass, invoke the command execution task.
         # This also invokes a separate "receive message" subtask, which is started
         # at the end of the task and runs asynchronously. The user attribution
         # for the task is the same as the original command execution task.
-        
+        result = tasks.execute_command.delay(serializer.data, str(endpoint.id), request.user.id)
+
         # Return the task ID, which is intended to be used by the frontend
         # to bring the user to the relevant TaskResult detail page.
-        
+        return Response({"task_id": result.id})
+    
+    # This isn't idempotent. But on one hand, we're just getting data; on the other
+    # hand, this violates what it means for something to be a GET endpoint, since
+    # caching is NOT valid and this has side effects.
+    @action(detail=True, methods=['get'])
+    def get_messages(self, request, pk=None):
         raise NotImplementedError
 
 # Files
