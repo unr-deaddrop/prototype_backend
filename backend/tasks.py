@@ -169,7 +169,7 @@ def receive_messages(
     endpoint_id: str,
     user_id: Optional[int] = None,
     request_id: Optional[str] = None
-) -> dict[str, Any]:
+) -> list[str]:
     """
     Start a task to receive all messages from an endpoint.
     
@@ -186,6 +186,10 @@ def receive_messages(
     except Endpoint.DoesNotExist:
         raise RuntimeError(f"The endpoint {endpoint_id=} does not exist!")
     
-    # Invoke "receive message" operation, wait until return; return results as-is
+    # Invoke "receive message" operation, wait until return
     task_id = current_task.request.id
-    return messaging.receive_messages(endpoint, request_id, task_id, user)
+    msgs = messaging.receive_messages(endpoint, request_id, task_id, user)
+    
+    # Obviously we can't serialize DeadDropMessages, so the next best thing is
+    # to just return a list of message IDs that can be looked up in the db
+    return [str(msg.message_id) for msg in msgs]
