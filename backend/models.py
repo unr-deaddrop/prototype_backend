@@ -247,9 +247,9 @@ class Message(models.Model):
     message_types = [(mtype.name, mtype.value) for mtype in DeadDropMessageType]
     
     message_id = models.UUIDField(primary_key=True, editable=False)
-    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
-    source = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
-    destination = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages", blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="users", blank=True, null=True)
+    source = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages_sources", blank=True, null=True)
+    destination = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages_destinations", blank=True, null=True)
     timestamp = models.DateTimeField()
     payload = models.JSONField()
     message_type = models.CharField(choices=message_types, max_length=50)
