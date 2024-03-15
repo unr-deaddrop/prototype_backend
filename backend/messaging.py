@@ -131,7 +131,7 @@ def receive_messages(
     it has already been validated; evidently forged messages should be excluded
     from messages.json, but should be mentioned in the resulting log output.
     """
-    temp_dir = invoke_message_handler("receieve", endpoint, listen_id=request_id)
+    temp_dir = invoke_message_handler("receive", endpoint, listen_id=request_id)
     temp_dir_path = Path(temp_dir.name).resolve()
     
     # Take message-logs.txt and use that as the result, also converting it into a 
@@ -281,8 +281,9 @@ def read_message_json(
     with open(message_path, "rt") as fp:
         data = fp.read()
         
-    if not isinstance(data, list):
-        raise RuntimeError(f"Expected list of messages from {MESSAGE_OUTPUT_NAME}, got {data}")
+    # Not needed since we're using typeadapter, not json.load
+    # if not isinstance(data, list):
+    #     raise RuntimeError(f"Expected list of messages from {MESSAGE_OUTPUT_NAME}, got {data}")
     
     # For each item, convert to DeadDropMessage
     # See https://stackoverflow.com/questions/55762673/how-to-parse-list-of-models-with-pydantic

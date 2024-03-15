@@ -21,6 +21,7 @@ from backend.models import (
     Credential,
     File,
     Log,
+    Message
 )
 from django_celery_results.models import TaskResult
 from backend.serializers import (
@@ -36,7 +37,8 @@ from backend.serializers import (
     TaskResultSerializer,
     CommandSchemaSerializer,
     AgentSchemaSerializer,
-    CommandSerializer
+    CommandSerializer,
+    MessageSerializer
 )
 from backend.packages import install_agent
 from backend.preprocessor import preprocess_dict, preprocess_list
@@ -55,6 +57,16 @@ class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
     #     "id",
     #     "name",
     # ]
+    
+class MessageViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    filter_backends = [DjangoFilterBackend]
+    # filterset_fields = [
+    #     "id",
+    #     "name",
+    # ]
+
 
 
 class TestViewSet(viewsets.ViewSet):
