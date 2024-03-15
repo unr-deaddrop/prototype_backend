@@ -64,7 +64,9 @@ from pydantic import TypeAdapter
 logger = logging.getLogger(__name__)
 
 LOG_FILE_NAME = "message-logs.txt"
+MESSAGE_CONFIG_NAME = "message_config.json"
 PROTOCOL_STATE_NAME = "protocol_state.json"
+MESSAGE_INPUT_NAME = "message.json"
 MESSAGE_OUTPUT_NAME = "messages.json"
 
 def send_message(
@@ -203,12 +205,12 @@ def invoke_message_handler(
             preferred_protocol=None
         )
     )
-    with open((temp_dir_path / "message_config.json"), "wt+") as fp:
+    with open((temp_dir_path / MESSAGE_CONFIG_NAME), "wt+") as fp:
         fp.write(msg_obj.model_dump_json())
     
     # Dump the DeadDropMessage as message.json into the temporary directory.
     if msg:
-        with open((temp_dir_path / "message.json"), "wt+") as fp:
+        with open((temp_dir_path / MESSAGE_INPUT_NAME), "wt+") as fp:
             fp.write(msg.model_dump_json())
         
     
@@ -280,7 +282,7 @@ def read_message_json(
         data = fp.read()
         
     if not isinstance(data, list):
-        raise RuntimeError(f"Expected list of messages from message.json, got {data}")
+        raise RuntimeError(f"Expected list of messages from {MESSAGE_OUTPUT_NAME}, got {data}")
     
     # For each item, convert to DeadDropMessage
     # See https://stackoverflow.com/questions/55762673/how-to-parse-list-of-models-with-pydantic
