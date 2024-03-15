@@ -22,6 +22,7 @@ from backend.models import (
     Credential,
     File,
     Log,
+    Message
 )
 from django_celery_results.models import TaskResult
 from backend.serializers import (
@@ -37,6 +38,8 @@ from backend.serializers import (
     TaskResultSerializer,
     CommandSchemaSerializer,
     AgentSchemaSerializer,
+    CommandSerializer,
+    MessageSerializer
 )
 from backend.packages import install_agent
 from backend.preprocessor import preprocess_dict, preprocess_list
@@ -45,30 +48,7 @@ from backend.preprocessor import preprocess_dict, preprocess_list
 # from backend import serializers
 import backend.tasks as tasks
 
-# Create your views here.
-# Users
-# @api_view(['POST'])
-# def signUp(request):
-#     serializer = SignUpSerializer(data=request.data)
-#     if serializer.is_valid():
-#         serializer.save()
-#     return Response(data=serializer.data)
-
-# from rest_framework import generics
-# class SignUpView(generics.GenericAPIView):
-#     serializer_class = SignUpSerializer
-#     def post(self, request):
-#         data = request.data
-#         serializer = self.serializer_class(data=data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             response = {
-#                 "message": "User created",
-#                 "data": serializer.data
-#             }
-#             return Response(data=response, status=status.HTTP_201_CREATED)
-#         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+import jsonschema
 
 class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TaskResult.objects.all()
@@ -78,6 +58,16 @@ class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
     #     "id",
     #     "name",
     # ]
+    
+class MessageViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    filter_backends = [DjangoFilterBackend]
+    # filterset_fields = [
+    #     "id",
+    #     "name",
+    # ]
+
 
 
 class TestViewSet(viewsets.ViewSet):
@@ -90,37 +80,6 @@ class TestViewSet(viewsets.ViewSet):
 
         return Response({"task_id": res.id, "data": result})
 
-
-# class SignUpViewSet(viewsets.ViewSet):
-    # serializer_class = SignUpSerializer
-    # def list(self, request):
-    #     queryset = User.objects.all()
-    #     serializer = self.serializer_class(queryset, many=True)
-    #     return Response(data=serializer.data)
-
-    # def create(self, request):
-        # return Response({"task_id":res.id, "data": result})
-        
-# class SignUpViewSet(viewsets.ViewSet):
-#     serializer_class = SignUpSerializer
-#     # def list(self, request):
-#     #     queryset = User.objects.all()
-#     #     serializer = self.serializer_class(queryset, many=True)
-#     #     return Response(data=serializer.data)
-    
-#     def create(self, request):
-#         data = request.data
-#         serializer = self.serializer_class(data=data)
-#         if serializer.is_valid():
-#             account = serializer.save()
-#             token = Token.objects.get(user=account).key
-#             response = {
-#                 "message": "User created",
-#                 "token": token,
-#                 "data": serializer.data
-#             }
-#             return Response(data=response, status=status.HTTP_201_CREATED)
-#         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UserViewSet(viewsets.ViewSet):
     queryset = User.objects.all()
@@ -259,92 +218,6 @@ class CredentialViewSet(viewsets.ModelViewSet):
     queryset = Credential.objects.all()
     serializer_class = CredentialSerializer
 
-    # @action(detail=False, methods=['post'])
-    # def celery(self, request):
-    #     tasks.task23.delay(data=request.data)
-    #     return Response(data={'key2':'val2'})
-
-    # def list(self, request):
-    #     serializer = self.get_serializer(self.get_queryset(), many=True)
-    #     return self.get_paginated_response(self.paginate_queryset(serializer.data))
-
-    # def create(self, *args, **kwargs):
-    #     return super().create(*args, **kwargs)
-
-    # def retrieve(self, request, pk=None):
-    #     pass
-
-    # def update(self, request, pk=None):
-    #     pass
-
-    # def partial_update(self, request, pk=None):
-    #     pass
-
-    # def destroy(self, request, pk=None):
-    #     pass
-
-# class AgentSchemaViewSet(viewsets.ViewSet):
-#     """
-#     Use this viewset to retrieve the schemas needed to generate a dynamic form
-#     for agent configuration. 
-
-#     This is typically used to grab all of the agent and protocol configuration 
-#     needed to construct a payload, which can then be used to issue a POST request
-#     to the `/endpoint` endpoint.
-    
-#     Note that this viewset runs the *raw* schema in agent.json through the 
-#     preprocessor, which may modify the schema by filling in reasonable default
-#     values, setting fields as read-only, and removing certain schema elements.
-#     """
-#     serializer_class = AgentSchemaSerializer
-    
-#     # TODO: shouldn't these be part of Agent/EndpointViewSet and just be an
-#     # @action(detail=True) instead, so we can actually use the PK? wouldn't that
-#     # be like a thousand times easier?
-    
-#     def retrieve(self, request, pk=None):
-#         raise NotImplementedError
-#         # queryset = User.objects.all()
-#         # user = get_object_or_404(queryset, pk=pk)
-#         # serializer = UserSerializer(user)
-#         # return Response(serializer.data)
-
-# class CommandSchemaViewSet(viewsets.ViewSet):
-#     """
-#     Use this viewset to retrieve the schemas needed to generate a dynamic form
-#     for command execution. 
-    
-#     This is typically used to grab all of the command arguments needed to construct 
-#     a command request message while simultaneously allowing them to be validated 
-#     server-side and in the web interface, *before* they get sent out to the agent. 
-#     This provides the user with more immediate feedback than if they received
-#     a command error over an hour later.
-#     """
-#     serializer_class = CommandSchemaSerializer
-    
-class ExecuteCommandViewSet(viewsets.ViewSet):
-    """
-    Use this viewset to start the tasking for executing a command.
-    
-    This effectively generates two asynchronous tasks - one to execute the command,
-    and another to receive the result of the command. Both tasks are associated with
-    the authenticated user for the request.
-    """
-    #TODO: make this!
-
-# @api_view(['GET'])
-# def credentials(request):
-#     credentials = Credential.objects.all()
-#     serializer = CredentialSerializer(credentials, many=True)
-#     return Response(serializer.data)
-
-# @api_view(['POST'])
-# def addCredential(request):
-#     serializer = CredentialSerializer(data=request.data)
-#     if serializer.is_valid():
-#         serializer.save()
-#     return Response(serializer.data)
-
 
 # Protocols
 class ProtocolViewSet(viewsets.ModelViewSet):
@@ -417,7 +290,6 @@ class EndpointViewSet(viewsets.ModelViewSet):
         endpoint: Endpoint = self.get_object()
         
         # Verify the endpoint and command are valid...
-        print(request.data)
         serializer = CommandSchemaSerializer(data=request.data)
         
         if not serializer.is_valid():
@@ -440,6 +312,79 @@ class EndpointViewSet(viewsets.ModelViewSet):
         # Return the selected command, preprocessed
         return Response(commands[command])
 
+    @action(detail=True, methods=['post'])
+    def execute_command(self, request, pk=None):
+        serializer = CommandSerializer(data=request.data)
+        endpoint: Endpoint = self.get_object()
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        
+        cmd_name = serializer.data['cmd_name']
+        cmd_args = serializer.data['cmd_args']
+        
+        # Retrieve the JSON schema for this command, do not preprocess. Fail
+        # if the command isn't found.
+        command_metadata = endpoint.agent.get_command_metadata()
+        commands = {cmd['name']: cmd for cmd in command_metadata}
+        if cmd_name not in commands:
+            raise ValidationError({"cmd_name": "Command is not valid for this endpoint!"})
+        
+        # Validate the incoming cmd_args against this schema
+        #
+        # Note that we can't use a serializer with a pre-defined schema, as with
+        # https://pypi.org/project/drf-jsonschema/, since the schema is defined
+        # at runtime. There are a few ways to get around this, but the stock
+        # jsonschema is fine. 
+        #
+        # Additionally, note that jsonschema supports the anyOf syntax that is
+        # normally removed by the preprocessor. We pass the raw Pydantic output
+        # to jsonschema, since this does exactly what we want - validation
+        # against the original. The absence of a non-required key is fine, since
+        # when it reaches the agent, it should be assumed None. In our case, this
+        # is guaranteed by Pydantic's model validation. Not necessarily true
+        # for other libraries in other languages, but that's outside our scope.
+        command_schema = commands[cmd_name]['argument_schema']
+        print(command_schema)
+        print(cmd_args)
+        validator = jsonschema.Draft202012Validator(command_schema)
+        
+        # Construct a validation error specifying failing fields that are
+        # *close enough* to DRF's native format. When no 
+        if not validator.is_valid(cmd_args):
+            errors = {
+                'global': [] # When tied to the overall schema
+            }
+            for error in validator.iter_errors(cmd_args):
+                if not error.relative_path:
+                    errors['global'].append(error.message)
+                else:
+                    errors[error.relative_path[-1]] = error.message
+            raise ValidationError(errors)
+        
+        # If the command arguments pass, invoke the command execution task.
+        # This also invokes a separate "receive message" subtask, which is started
+        # at the end of the task and runs asynchronously. The user attribution
+        # for the task is the same as the original command execution task.
+        result = tasks.execute_command.delay(serializer.data, str(endpoint.id), request.user.id)
+
+        # Return the task ID, which is intended to be used by the frontend
+        # to bring the user to the relevant TaskResult detail page.
+        return Response({"task_id": result.id})
+    
+    # This isn't idempotent. But on one hand, we're just getting data; on the other
+    # hand, this violates what it means for something to be a GET endpoint, since
+    # caching is NOT valid and this has side effects.
+    @action(detail=True, methods=['get'])
+    def get_messages(self, request, pk=None):
+        """
+        Start a task to get all new messages from an endpoint.
+        """
+        endpoint: Endpoint = self.get_object()
+        result = tasks.receive_messages.delay(str(endpoint.id), request.user.id, None)
+        return Response({"task_id": result.id})
+        
+
 # Files
 class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects.all()
@@ -455,10 +400,3 @@ class FileViewSet(viewsets.ModelViewSet):
 class LogViewSet(viewsets.ModelViewSet):
     queryset = Log.objects.all()
     serializer_class = LogSerializer
-
-
-# @api_view(['GET'])
-# def logs(request):
-#     logs = Log.objects.all()
-#     serializer = LogSerializer(logs, many=True)
-#     return Response(serializer.data)

@@ -1,5 +1,5 @@
 # Always use the latest commited version of the DeadDrop metaclasses.
-deaddrop-meta @ git+https://github.com/unr-deaddrop/deaddrop_meta@main
+deaddrop-meta @ git+https://github.com/unr-deaddrop/deaddrop_meta@v0.0.3
 
 # Functional
 Django==4.2.7 
@@ -10,6 +10,8 @@ django-stubs==4.2.7
 django-stubs-ext==4.2.7
 djangorestframework==3.14.0
 django-celery-results==2.5.1
+
+jsonschema==4.10.3
 
 # Celery
 celery==5.3.6

@@ -9,6 +9,7 @@ from backend.models import (
     Credential,
     File,
     Log,
+    Message
 )
 from django.contrib.auth.models import User
 from django_celery_results.models import TaskResult
@@ -20,6 +21,11 @@ class TestSerializer(serializers.Serializer):
 class TaskResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskResult
+        fields = "__all__"
+
+class MessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
         fields = "__all__"
 
 class UserSerializer(serializers.ModelSerializer):
@@ -125,3 +131,10 @@ class CommandSchemaSerializer(serializers.Serializer):
 class AgentSchemaSerializer(serializers.Serializer):
     # agent = serializers.IntegerField() # PK of agent
     agent = AgentSerializer(read_only=True)
+    
+    
+class CommandSerializer(serializers.Serializer):
+    # The command name.
+    cmd_name = serializers.CharField(required=True)
+    # The unvalidated command arguments.
+    cmd_args = serializers.JSONField(required=True)

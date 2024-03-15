@@ -2,10 +2,10 @@
 The DeadDrop payload generation system.
 
 The payload generation system works by assuming that a package contains a
-docker-compose-build.yml which can be executed to generate the payload.
+`make payload_entry` recipe that expects the existence of a `build-config.json`.
 
 The following conventions are assumed:
-- That the build script is named build-payload.sh;
+- That a Makefile exists, and that a payload_entry recipe exists;
 - That the script uses a JSON file at the root of the agent directory called
   build-config.json that is used, partially or in full, to configure the agent;
 - That once the script returns, the following contents are made available in
@@ -18,11 +18,10 @@ The following conventions are assumed:
   - payload-logs.txt, a standard text file containing the payload log output
     (which is used to generate a single giant Log entry associated with this task).
 
-In general, it is assumed that the agent's build-payload.sh will leverage a
+In general, it is assumed that the payload_entry recipe will leverage a
 docker-compose-payload.yml and a corresponding Dockerfile.payload. These
-are required for platform-independent payload construction, and is enforced
-by the package manager. In addition to build-payload.sh, these three files
-are expected to generate the payload.
+are required for platform-independent payload construction, though not enforced
+by the package manager (only the existence of a Makefile is checked).
 
 Note that unlike the package manager, this module *does* import the Django
 models, as I currently don't see any reason for this module to ever be imported
@@ -30,7 +29,6 @@ by the Django models. The advantage of strictly tying these to the models is tha
 we can keep the interface between agents and the server consistent.
 """
 
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -89,14 +87,7 @@ def build_payload(
     # Copy the entire package into a temporary directory (note that we don't need
     # to resolve the package path, since it's already correct relative to wherever
     # Django and the workers are running)
-    temp_dir = TemporaryDirectory()
-
-    if not Path(agent.package_path).exists():
-        raise RuntimeError(
-            f"The package at {Path(agent.package_path).resolve()} does not exist!"
-        )
-
-    shutil.copytree(agent.package_path, temp_dir.name, dirs_exist_ok=True)
+    temp_dir = agent.copy_to_temp_dir()
     temp_dir_path = Path(temp_dir.name).resolve()
     logger.info(f"Using {temp_dir_path} for build")
 
@@ -145,6 +136,9 @@ def build_payload(
         **kwargs,
     )
     endpoint.save()
+    
+    # Explicitly blow up the temporary directory.
+    temp_dir.cleanup()
 
     # Return the build result
     return endpoint

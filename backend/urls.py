@@ -17,6 +17,7 @@ router.register(r"users", views.UserViewSet, basename="user")
 router.register(r"installAgent", views.InstallAgentViewSet, basename="installAgent")
 router.register(r"test", views.TestViewSet, basename="test")
 router.register(r"taskresults", views.TaskResultViewSet, basename="taskresults")
+router.register(r"messages", views.MessageViewSet, basename="messages")
 
 urlpatterns = [
     # path('/', views.credentials),

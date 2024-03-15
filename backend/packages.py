@@ -39,6 +39,7 @@ REQUIRED_AGENT_METADATA_FILES = (
     "agent.json",
     "commands.json",
     "protocols.json",
+    "Makefile"
 )
 
 

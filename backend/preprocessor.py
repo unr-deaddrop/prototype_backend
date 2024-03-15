@@ -58,6 +58,8 @@ import uuid
 
 from django.conf import settings
 
+import jsonschema
+
 def preprocess_create_id(input: dict[str, Any], _value: Any) -> None:
     """
     Insert a random UUIDv4, set it as the default for that field, and make it
@@ -104,7 +106,7 @@ def preprocess_anyof(input: dict[str, Any]) -> None:
     
     data: list[dict[str, Any]] = input.pop("anyOf")
     for d in data:
-        if d != {"type": None}:
+        if d != {"type": "null"}:
             # Prefer the keys of the `anyOf` element over that of the original
             # parent. I don't think there will be any conflicts, but this ensures
             # that the entire "type" of the anyOf is preserved after the operation.
@@ -147,7 +149,7 @@ def preprocess_list(input: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return input
 
 if __name__ == "__main__":
-    test_d = {
+    test_schema = {
         "description": "Agent-wide configuration definitions. Includes both non-sensitive and\nsensitive configurations set at runtime.\nSee agent.cfg for more details.",
         "properties": {
             "AGENT_ID": {
@@ -163,14 +165,33 @@ if __name__ == "__main__":
                         "type": "integer"
                     },
                     {
-                        "type": None
+                        "type": "null"
                     }
                 ],
                 "default": None,
                 "description": "The timeout for the command; returns an empty result on failure.",
                 "title": "Timeout"
             }
-        }
+        },
+        "required" : ['timeout']
+        
     }
 
-    print(preprocess_dict(test_d))
+    data = {}
+
+    # Test validation without preprocessing
+    validator = jsonschema.Draft202012Validator(test_schema)
+    if not validator.is_valid(data):    
+        errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
+        for error in errors:
+            print(error.validator_value)
+
+    # print(preprocess_dict(test_schema))
+    
+    # # Test validation with preprocessing, emulate 
+    # errors = {}
+    # validator = jsonschema.Draft202012Validator(test_schema)
+    # if not validator.is_valid(data): 
+    #     for error in validator.iter_errors(data):
+    #         errors[error.relative_path[-1]] = error.message
+    # print(errors)
