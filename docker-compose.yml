@@ -1,6 +1,22 @@
 version: '3'
 services:
 
+  reverse-proxy:
+    # The official v2 Traefik docker image
+    image: traefik:v2.11
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    expose:
+      - "8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+
   redis:
     image: redis:7.0.11-alpine # other stuff may not work due to alpine. probably will tho
 
@@ -18,6 +34,8 @@ services:
       - "8000:8000"
     expose:
       - "8000"
+    labels:
+      - "traefik.http.routers.backend.rule=Host(`backend.localhost`)"
     volumes:
       # Make the host's Docker daemon accessible, allows payloads to spin up
       # their own sibling containers
@@ -80,6 +98,8 @@ services:
       - "5173:5173"
     expose:
       - "5173"
+    labels:
+      - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
 
 # Allows data to persist. Particularly important for the package manager, since
 # it needs different containers all operating on the same data.
