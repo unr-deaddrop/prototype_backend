@@ -75,24 +75,33 @@ def get_recent_global_message_stats() -> DataFrameGroupBy:
     # Start by getting the current time, less 24 hours
     end = pd.Timestamp.utcnow()
     start = end - DateOffset(hours=24)
+    print(end, start)
     
     # Get all recent messages, selecting relevant fields, and convert as necessary.
     # For our purposes, replace any null UUIDs with None in either the source or
     # destination columns.
     recent_messages = Message.objects.filter(timestamp__gte=start.to_pydatetime())
+    print(list(recent_messages.all()))
     df = pd.DataFrame(recent_messages.values("message_id", "timestamp", "source", "destination"))
     df.timestamp = pd.to_datetime(df.timestamp)
     df.source = df.source.apply(replace_null_uuid)
     df.destination = df.destination.apply(replace_null_uuid)
     
+    print(df)
+    print(df.timestamp)
+    
     # Create a DatetimeIndex relative to end, then reverse so that it is 
-    # monotonically increasing (required by pd.cut). Assume UTC.
-    date_idx = pd.DatetimeIndex([end-DateOffset(hours=e) for e in range(0, 25)])
-    date_idx = date_idx.tz_localize('UTC')
+    # monotonically increasing (required by pd.cut). Assume UTC (handled by Django).
+    date_idx = pd.DatetimeIndex([end-DateOffset(hours=e) for e in range(0, 25)][::-1])
+    # date_idx = date_idx.tz_localize('UTC')
+    
+    print(date_idx)
     
     # Categorize timestamps and use this as the groupby. With observed=False,
     # this includes categories for which their value was 0.
-    res = df.groupby([pd.cut(df['timestamp'], date_idx)], observed=False)
+    res = df.groupby([pd.cut(df['timestamp'], date_idx)], observed=False).count()
+    
+    print(res)
     
     # The result is a groupby result whose columns are message_id, timestamp, 
     # source, destination. At this point, the immediate result can be returned.

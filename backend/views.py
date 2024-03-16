@@ -428,27 +428,6 @@ class EndpointViewSet(viewsets.ModelViewSet):
         endpoint: Endpoint = self.get_object()
         result = tasks.receive_messages.delay(str(endpoint.id), request.user.id, None)
         return Response({"task_id": result.id})
-    
-    @action(detail=False, methods=['get'])
-    def get_communication_stats(self, request):
-        """
-        Get a breakdown of the number of messages sent to or from a particular 
-        endpoint. The return value is as follows:
-        
-        ```json
-            "labels": [<endpoint1>, <endpoint2>, ...],
-            "data": [<value1>, <value2>, ...]
-        ```
-        """
-        # https://stackoverflow.com/questions/51701091/django-annotate-with-multiple-count
-        endpoints = Endpoint.objects.annotate(num_source=Count('messages_sources', distinct=True), num_dest=Count('messages_destinations', distinct=True))
-        
-        return Response(
-            {
-                "labels": [str(endpoint) for endpoint in endpoints],
-                "values": [int(endpoint.num_source) + int(endpoint.num_dest) for endpoint in endpoints]
-            }
-        )
         
 
 # Files
