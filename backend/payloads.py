@@ -29,10 +29,10 @@ by the Django models. The advantage of strictly tying these to the models is tha
 we can keep the interface between agents and the server consistent.
 """
 
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 from tempfile import TemporaryDirectory
+import datetime
 import json
 import logging
 import os
@@ -159,7 +159,7 @@ def get_and_save_build_log(
             task=TaskResult.objects.get(task_id=task_id),
             category="payload-build",
             level=DeadDropLogLevel.INFO,
-            timestamp=datetime.now(),
+            timestamp=datetime.datetime.now(datetime.UTC),
             data=fp.read(),
         )
 
