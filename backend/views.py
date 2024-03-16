@@ -13,7 +13,6 @@ from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
-from django.db.models import Count
 
 from backend.models import (
     Agent,
@@ -43,6 +42,7 @@ from backend.serializers import (
 )
 from backend.packages import install_agent
 from backend.preprocessor import preprocess_dict, preprocess_list
+import backend.statistics as stats
 
 # from backend import models
 # from backend import serializers
@@ -58,6 +58,13 @@ class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
     #     "id",
     #     "name",
     # ]
+    @action(detail=False, methods=['get'])
+    def get_task_stats(self, request):
+        """
+        Get the number of messages sent by both the agent and the server, 
+        separately, for each hour in the last 24 hours.
+        """
+        return Response(stats.get_task_stats())
     
 class MessageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Message.objects.all()
@@ -67,8 +74,40 @@ class MessageViewSet(viewsets.ReadOnlyModelViewSet):
     #     "id",
     #     "name",
     # ]
+    @action(detail=False, methods=['get'])
+    def get_global_recent_stats(self, request):
+        """
+        Get the number of messages sent by both the agent and the server, 
+        combined, for each hour in the last 24 hours.
+        """
+        res = stats.get_recent_global_message_stats()
+        # Select just the message_id column, invert the list (so the most recent
+        # hour bin is first), and return.
+        return Response(list(res.message_id[::-1]))
 
-
+    @action(detail=False, methods=['get'])
+    def get_split_recent_stats(self, request):
+        """
+        Get the number of messages sent by both the agent and the server, 
+        separately, for each hour in the last 24 hours.
+        """
+        res = stats.get_recent_global_message_stats()
+        # "source" refers to the number of communications sent by the agent in 
+        # each hour. "destination" refers to the same, but for the server.
+        return Response(
+            {
+                "sent_by_agent":list(res.source[::-1]),
+                "sent_by_server":list(res.destination[::-1])
+            }
+        )
+    
+    @action(detail=False, methods=['get'])
+    def get_endpoint_stats(self, request):
+        """
+        Get the number of messages sent by each endpoint *ever*. No filtering
+        is applied.
+        """
+        return Response(stats.get_endpoint_communication_stats())
 
 class TestViewSet(viewsets.ViewSet):
     serializer_class = TestSerializer
@@ -156,12 +195,18 @@ class AgentViewSet(viewsets.ModelViewSet):
         return Response(agent.get_command_metadata())
 
     @action(detail=False, methods=['get'])
-    def get_agent_stats(self, request):        
-        agents = Agent.objects.annotate(num_endpoints=Count('endpoints'))
+    def get_endpoint_share(self, request):
+        """
+        Get the number of endpoints currently associated with each agent.
+        """
+        data = stats.get_agent_stats()
+        
+        # The lists will directly correspond, see
+        # https://stackoverflow.com/questions/835092/python-dictionary-are-keys-and-values-always-the-same-order
         return Response(
             {
-                "labels": [agent.name for agent in agents],
-                "values": [agent.num_endpoints for agent in agents]
+                "labels": list(data.keys()),
+                "values": list(data.values())
             }
         )
 
@@ -383,6 +428,27 @@ class EndpointViewSet(viewsets.ModelViewSet):
         endpoint: Endpoint = self.get_object()
         result = tasks.receive_messages.delay(str(endpoint.id), request.user.id, None)
         return Response({"task_id": result.id})
+    
+    @action(detail=False, methods=['get'])
+    def get_communication_stats(self, request):
+        """
+        Get a breakdown of the number of messages sent to or from a particular 
+        endpoint. The return value is as follows:
+        
+        ```json
+            "labels": [<endpoint1>, <endpoint2>, ...],
+            "data": [<value1>, <value2>, ...]
+        ```
+        """
+        # https://stackoverflow.com/questions/51701091/django-annotate-with-multiple-count
+        endpoints = Endpoint.objects.annotate(num_source=Count('messages_sources', distinct=True), num_dest=Count('messages_destinations', distinct=True))
+        
+        return Response(
+            {
+                "labels": [str(endpoint) for endpoint in endpoints],
+                "values": [int(endpoint.num_source) + int(endpoint.num_dest) for endpoint in endpoints]
+            }
+        )
         
 
 # Files
