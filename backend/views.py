@@ -80,8 +80,6 @@ class MessageViewSet(viewsets.ReadOnlyModelViewSet):
         Get the number of messages sent by both the agent and the server, 
         combined, for each hour in the last 24 hours.
         """
-        if 
-
         res = stats.get_recent_global_message_stats()
         # Select just the message_id column, invert the list (so the most recent
         # hour bin is first), and return.
