@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Any, Union
 from tempfile import TemporaryDirectory
+import logging
 import json
 import shutil
 import uuid
-
 
 from django.contrib.auth.models import User, Group
 from django.db import models
@@ -16,6 +16,8 @@ from django.dispatch import receiver
 from django_celery_results.models import TaskResult
 
 from deaddrop_meta.protocol_lib import DeadDropMessageType, DeadDropMessage
+
+logger = logging.getLogger(__name__)
 
 # Add an extra field to the TaskResult model called task_creator. This is an FK
 # to Django's stock User field. While allowed to be blank, it is not intended
@@ -122,6 +124,12 @@ class Agent(models.Model):
         RuntimeError.
         """
         temp_dir = TemporaryDirectory()
+        
+        # Helps avoid random Docker errors due to packaging being placed in folders
+        # with trailing underscores.
+        while "_" in temp_dir.name:
+            logger.warning(f"You rolled Hu Tao! (directory name {temp_dir.name} invalid, retrying)")
+            temp_dir = TemporaryDirectory()
         
         if not self.package_path:
             return None
