@@ -85,9 +85,11 @@ def get_recent_global_message_stats() -> DataFrameGroupBy:
     df = pd.DataFrame(recent_messages.values("message_id", "timestamp", "source", "destination"))
 
     if df.empty:
-        # Initialize an empty dataframe with the desired columns so that the calculations still 
-        # work.
+        # Initialize an empty dataframe with the desired columns so that the calculations still
+        # work. Force localization.
+        # https://stackoverflow.com/questions/75352799/creating-an-empty-dataframe-in-pandas-with-column-of-type-datetime64ns-europe
         df = pd.DataFrame({"message_id": [], "timestamp": [], "source": [], "destination": []})
+        df['timestamp'] = pd.to_datetime(df["timestamp"]).dt.tz_localize('UTC')
 
     df.timestamp = pd.to_datetime(df.timestamp)
     df.source = df.source.apply(replace_null_uuid)
