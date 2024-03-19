@@ -83,6 +83,12 @@ def get_recent_global_message_stats() -> DataFrameGroupBy:
     recent_messages = Message.objects.filter(timestamp__gte=start.to_pydatetime())
     print(list(recent_messages.all()))
     df = pd.DataFrame(recent_messages.values("message_id", "timestamp", "source", "destination"))
+
+    if df.empty:
+        # Initialize an empty dataframe with the desired columns so that the calculations still 
+        # work.
+        df = pd.DataFrame({"message_id": [], "timestamp": [], "source": [], "destination": []})
+
     df.timestamp = pd.to_datetime(df.timestamp)
     df.source = df.source.apply(replace_null_uuid)
     df.destination = df.destination.apply(replace_null_uuid)

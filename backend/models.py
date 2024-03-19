@@ -254,7 +254,8 @@ class Message(models.Model):
     # By convention, deaddrop_meta should never *remove* existing message types.
     message_types = [(mtype.name, mtype.value) for mtype in DeadDropMessageType]
     
-    message_id = models.UUIDField(primary_key=True, editable=False)
+    # It is very rare that messages are created manually.
+    message_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="users", blank=True, null=True)
     source = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages_sources", blank=True, null=True)
     destination = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="messages_destinations", blank=True, null=True)
