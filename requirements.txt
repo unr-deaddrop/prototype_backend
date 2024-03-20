@@ -13,6 +13,7 @@ django-celery-results==2.5.1
 
 jsonschema==4.10.3
 pandas==2.2.1
+humanize==4.9.0
 
 # Celery
 celery==5.3.6
