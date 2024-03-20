@@ -83,7 +83,7 @@ class MessageViewSet(viewsets.ReadOnlyModelViewSet):
         res = stats.get_recent_global_message_stats()
         # Select just the message_id column, invert the list (so the most recent
         # hour bin is first), and return.
-        return Response(list(res.message_id[::-1]))
+        return Response(list(res.message_id))
 
     @action(detail=False, methods=['get'])
     def get_split_recent_stats(self, request):
@@ -96,8 +96,8 @@ class MessageViewSet(viewsets.ReadOnlyModelViewSet):
         # each hour. "destination" refers to the same, but for the server.
         return Response(
             {
-                "sent_by_agent":list(res.source[::-1]),
-                "sent_by_server":list(res.destination[::-1])
+                "sent_by_agent":list(res.source),
+                "sent_by_server":list(res.destination)
             }
         )
     
