@@ -9,6 +9,7 @@ import logging
 from celery import shared_task, current_task, states
 from celery.signals import before_task_publish
 from django_celery_results.models import TaskResult
+from pydantic import TypeAdapter
 
 from backend.models import Agent, Endpoint
 from backend.serializers import EndpointSerializer
@@ -169,7 +170,7 @@ def receive_messages(
     endpoint_id: str,
     user_id: Optional[int] = None,
     request_id: Optional[str] = None
-) -> list[str]:
+) -> dict[str, Any]:
     """
     Start a task to receive all messages from an endpoint.
     
@@ -192,4 +193,8 @@ def receive_messages(
     
     # Obviously we can't serialize DeadDropMessages, so the next best thing is
     # to just return a list of message IDs that can be looked up in the db
-    return [str(msg.message_id) for msg in msgs]
+    # return [str(msg.message_id) for msg in msgs]
+    
+    # XXX: For demonstration, dump the entire received message.
+    ta = TypeAdapter(list[DeadDropMessage])
+    return ta.dump_python(msgs)

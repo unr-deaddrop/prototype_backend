@@ -1,4 +1,5 @@
 from pathlib import Path
+import uuid
 
 # from django.shortcuts import render
 from rest_framework.response import Response
@@ -13,6 +14,7 @@ from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.db.models import Q, Func, IntegerField
 
 from backend.models import (
     Agent,
@@ -43,21 +45,76 @@ from backend.serializers import (
 from backend.packages import install_agent
 from backend.preprocessor import preprocess_dict, preprocess_list
 import backend.statistics as stats
-
-# from backend import models
-# from backend import serializers
 import backend.tasks as tasks
 
 import jsonschema
+import humanize
+
+class DashboardViewSet(viewsets.ViewSet):
+    # @action(detail=False, methods=['get'])
+    
+    # Bit of an abuse of semantics, but whatever
+    def list(self, request):
+        """
+        Get all dashboard-related statistics.
+        """
+        
+        # Note that the message length excludes header data.
+        # XXX: Also, note that this is strictly Postgres-only. This moves us away 
+        # from SQLite use entirely.
+        all_msgs = Message.objects.annotate(msg_length=Func('payload', function='pg_column_size', output_field=IntegerField()))
+        
+        outgoing_msgs = all_msgs.filter(Q(source=None) | Q(source=uuid.UUID(int=0))).all()
+        incoming_msgs = all_msgs.filter(~(Q(source=None) | Q(source=uuid.UUID(int=0)))).all()
+        
+        outgoing_vol = sum([msg.msg_length for msg in outgoing_msgs])
+        incoming_vol = sum([msg.msg_length for msg in incoming_msgs])
+        
+        return Response(
+            {
+                "installed_agents": Agent.objects.count(),
+                "registered_endpoints": Endpoint.objects.count(),
+                "messages_sent": outgoing_msgs.count(),
+                "messages_fetched": incoming_msgs.count(),
+                "outgoing_volume": humanize.naturalsize(outgoing_vol),
+                "incoming_volume": humanize.naturalsize(incoming_vol),
+                "total_tasks": TaskResult.objects.count(),
+                "ongoing_tasks": TaskResult.objects.filter(status="PENDING").count(),
+                "successful_tasks": TaskResult.objects.filter(status="SUCCESS").count(),
+                "failed_tasks": TaskResult.objects.filter(status="FAILURE").count(),
+            }
+        )
 
 class TaskResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TaskResult.objects.all()
     serializer_class = TaskResultSerializer
     filter_backends = [DjangoFilterBackend]
-    # filterset_fields = [
-    #     "id",
-    #     "name",
-    # ]
+    # allows ?status=PENDING to determine running tasks
+    filterset_fields = ["status"] 
+    
+    @action(detail=True, methods=['get'])
+    def get_task_metadata(self, request, pk=None):
+        task: TaskResult = self.get_object()
+        initiating_user: User = task.task_creator
+        
+        # This is always set, but it might not be accurate
+        finish_time: str = task.date_done.isoformat()
+        
+        if task.status == "PENDING":
+            finish_time = "(in progress)"
+        
+        # All tasks are currently on demand, and we don't have the information
+        # to generate a source just yet.
+        return Response(
+            {
+                "source": "unknown",
+                "initiating_user": initiating_user.username,
+                "type": "on demand",
+                "start_time": task.date_created,
+                "finish_time": finish_time
+            }
+        )
+    
     @action(detail=False, methods=['get'])
     def get_task_stats(self, request):
         """
@@ -81,9 +138,9 @@ class MessageViewSet(viewsets.ReadOnlyModelViewSet):
         combined, for each hour in the last 24 hours.
         """
         res = stats.get_recent_global_message_stats()
-        # Select just the message_id column, invert the list (so the most recent
-        # hour bin is first), and return.
-        return Response(list(res.message_id[::-1]))
+        # Select just the message_id column, which amounts to the combined 
+        # agent/server communications.
+        return Response(list(res.message_id))
 
     @action(detail=False, methods=['get'])
     def get_split_recent_stats(self, request):
@@ -96,8 +153,8 @@ class MessageViewSet(viewsets.ReadOnlyModelViewSet):
         # each hour. "destination" refers to the same, but for the server.
         return Response(
             {
-                "sent_by_agent":list(res.source[::-1]),
-                "sent_by_server":list(res.destination[::-1])
+                "sent_by_agent":list(res.source),
+                "sent_by_server":list(res.destination)
             }
         )
     
