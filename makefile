@@ -52,6 +52,12 @@ docker_run-%:
 
 docker_compose_up:
 	docker-compose up -d --build
+	docker image prune -f
+
+docker_compose_down-%:
+	docker-compose stop $* #this will stop only the selected container
+	docker-compose rm $* # this will remove the docker container permanently 
+	docker-compose up -d # builds/rebuilds all not already built container
 
 docker_compose_down:
 	docker-compose down
