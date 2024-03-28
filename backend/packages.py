@@ -49,7 +49,7 @@ REQUIRED_AGENT_METADATA_FILES = (
 )
 
 
-def install_agent(bundle_path: Path, user: Optional[User] = None) -> Agent:
+def install_agent(bundle_path: Path, user: Optional[User] = None, task_id: Optional[str] = None) -> Agent:
     """
     Install an agent from a bundle.
 
@@ -67,7 +67,7 @@ def install_agent(bundle_path: Path, user: Optional[User] = None) -> Agent:
     # Run the installation script to expose all the metadata. Currently, we don't
     # permit a custom script name, since that would require another layer of
     # expectations we don't really need to support right now.
-    execute_install_script(package_path, user)
+    execute_install_script(package_path, user, task_id)
 
     # Assert that all of the (currently) required metadata files are there.
     if not check_required_metadata(package_path, REQUIRED_AGENT_METADATA_FILES):
@@ -247,6 +247,8 @@ def execute_install_script(
         )
         log.save()
         
+        if p.returncode != 0:
+            raise RuntimeError("The makefile had a nonzero exit code!")
             
     except subprocess.CalledProcessError as e:
         logger.exception(f"The install script failed! {p.stdout=} {p.stderr=}")

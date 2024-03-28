@@ -105,7 +105,7 @@ def build_payload(
     p = subprocess.run(
         ["make", "payload_entry"], shell=False, capture_output=True, cwd=temp_dir_path
     )
-    logger.warning(p.stdout)
+    logger.warning(f"{p.stdout=!r} {p.stderr=!r}")
 
     # Take payload-logs.txt and convert it into a single LogMessage (this is
     # first so that even if the rest of the build fails, we have a coherent
