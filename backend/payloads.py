@@ -153,10 +153,16 @@ def get_and_save_build_log(
         raise RuntimeError(f"Missing log output for payload at {log_path}!")
     with open(log_path, "rt") as fp:
         logger.debug(f"Creating log entry from data at {log_path}")
+        
+        if task_id:
+            task = TaskResult.objects.get(task_id=task_id)
+        else:
+            task = None
+            
         log = Log(
             source=None,
             user=user,
-            task=TaskResult.objects.get(task_id=task_id),
+            task=task,
             category="payload-build",
             level=DeadDropLogLevel.INFO,
             timestamp=datetime.datetime.now(datetime.UTC),

@@ -288,14 +288,9 @@ class InstallAgentViewSet(viewsets.ViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors)
 
-        try:
-            agent_obj = install_agent(Path(data["bundle_path"].temporary_file_path()))
-        except Exception as e:
-            raise ValidationError({"bundle_path": str(e)})
-            # return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        result = tasks.install_agent.delay(data['bundle_path'], request.user.id)
 
-        serializer = AgentSerializer(agent_obj)
-        return Response(serializer.data)
+        return Response({"task_id": result.id})
 
 
 @api_view(["GET"])

@@ -2,6 +2,7 @@
 All shared Celery tasks.
 """
 
+from pathlib import Path
 from typing import Any, Optional
 import time
 import logging
@@ -12,11 +13,12 @@ from django_celery_results.models import TaskResult
 from pydantic import TypeAdapter
 
 from backend.models import Agent, Endpoint
-from backend.serializers import EndpointSerializer
+from backend.serializers import EndpointSerializer, AgentSerializer
 from django.contrib.auth.models import User
 from django.db.models.query import QuerySet
 import backend.messaging as messaging
 import backend.payloads as payloads
+import backend.packages as packages
 
 
 from deaddrop_meta.protocol_lib import DeadDropMessage, CommandRequestPayload, DeadDropMessageType
@@ -198,3 +200,12 @@ def receive_messages(
     # XXX: For demonstration, dump the entire received message.
     ta = TypeAdapter(list[DeadDropMessage])
     return ta.dump_python(msgs)
+
+@shared_task
+def install_agent(bundle_path: str, user_id: Optional[int] = None) -> dict[str, Any]:
+    """
+    Install an agent through the package manager.
+    """
+    agent_obj = packages.install_agent(Path(bundle_path))
+    serializer = AgentSerializer(agent_obj)
+    return serializer.data
