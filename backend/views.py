@@ -1,5 +1,7 @@
 from pathlib import Path
 import uuid
+import shutil
+import tempfile
 
 # from django.shortcuts import render
 from rest_framework.response import Response
@@ -15,6 +17,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Func, IntegerField
+from django.conf import settings
 
 from backend.models import (
     Agent,
@@ -287,15 +290,19 @@ class InstallAgentViewSet(viewsets.ViewSet):
 
         if not serializer.is_valid():
             return Response(serializer.errors)
+        
+        temp_path = Path(data['bundle_path'].temporary_file_path())
+        
+        # Copy the file to somewhere where it won't get instantly obliterated after
+        # this request finishes (which is really quickly)
+        bundle_dir = (Path(settings.MEDIA_ROOT) / "install_agent_uploads").resolve()
+        bundle_dir.mkdir(exist_ok=True, parents=True)
+        bundle_target = bundle_dir / temp_path.name
+        shutil.copy2(temp_path, bundle_target)
+    
+        result = tasks.install_agent.delay(str(bundle_target), request.user.id)
 
-        try:
-            agent_obj = install_agent(Path(data["bundle_path"].temporary_file_path()))
-        except Exception as e:
-            raise ValidationError({"bundle_path": str(e)})
-            # return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = AgentSerializer(agent_obj)
-        return Response(serializer.data)
+        return Response({"task_id": result.id})
 
 
 @api_view(["GET"])

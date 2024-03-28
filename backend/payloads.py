@@ -105,7 +105,7 @@ def build_payload(
     p = subprocess.run(
         ["make", "payload_entry"], shell=False, capture_output=True, cwd=temp_dir_path
     )
-    logger.warning(p.stdout)
+    logger.warning(f"{p.stdout=!r} {p.stderr=!r}")
 
     # Take payload-logs.txt and convert it into a single LogMessage (this is
     # first so that even if the rest of the build fails, we have a coherent
@@ -153,10 +153,16 @@ def get_and_save_build_log(
         raise RuntimeError(f"Missing log output for payload at {log_path}!")
     with open(log_path, "rt") as fp:
         logger.debug(f"Creating log entry from data at {log_path}")
+        
+        if task_id:
+            task = TaskResult.objects.get(task_id=task_id)
+        else:
+            task = None
+            
         log = Log(
             source=None,
             user=user,
-            task=TaskResult.objects.get(task_id=task_id),
+            task=task,
             category="payload-build",
             level=DeadDropLogLevel.INFO,
             timestamp=datetime.datetime.now(datetime.UTC),

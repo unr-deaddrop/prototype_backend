@@ -14,6 +14,8 @@ Django models they correspond to.
 """
 
 from pathlib import Path
+from typing import Optional
+import datetime
 import json
 import logging
 import os
@@ -22,8 +24,12 @@ import stat
 import subprocess
 import zipfile
 
-from backend.models import Agent, Protocol
+from django.contrib.auth.models import User
+from django_celery_results.models import TaskResult
+from backend.models import Agent, Log
 from django.conf import settings
+
+from deaddrop_meta.protocol_lib import DeadDropLogLevel
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +49,7 @@ REQUIRED_AGENT_METADATA_FILES = (
 )
 
 
-def install_agent(bundle_path: Path) -> Agent:
+def install_agent(bundle_path: Path, user: Optional[User] = None, task_id: Optional[str] = None) -> Agent:
     """
     Install an agent from a bundle.
 
@@ -61,7 +67,7 @@ def install_agent(bundle_path: Path) -> Agent:
     # Run the installation script to expose all the metadata. Currently, we don't
     # permit a custom script name, since that would require another layer of
     # expectations we don't really need to support right now.
-    execute_install_script(package_path)
+    execute_install_script(package_path, user, task_id)
 
     # Assert that all of the (currently) required metadata files are there.
     if not check_required_metadata(package_path, REQUIRED_AGENT_METADATA_FILES):
@@ -204,7 +210,10 @@ def check_required_metadata(package_path: Path, required_files: tuple[str]) -> b
 
 
 def execute_install_script(
-    package_path: Path, shell_command: str = "make install"
+    package_path: Path, 
+    user: Optional[User], 
+    task_id: Optional[str] = None,
+    shell_command: str = "make install"
 ) -> None:
     """
     Execute the installation script provided with the package after unbundling.
@@ -221,6 +230,26 @@ def execute_install_script(
         logger.info(p.stdout)
         if p.stderr:
             logger.warning(p.stderr)
+        
+        if task_id:
+            task = TaskResult.objects.get(task_id=task_id)
+        else:
+            task = None
+                
+        log = Log(
+            source=None,
+            user=user,
+            task=task,
+            category="install",
+            level=DeadDropLogLevel.INFO,
+            timestamp=datetime.datetime.now(datetime.UTC),
+            data=(b"stdout:" + p.stdout + b"\nstderr:" + p.stderr),
+        )
+        log.save()
+        
+        if p.returncode != 0:
+            raise RuntimeError("The makefile had a nonzero exit code!")
+            
     except subprocess.CalledProcessError as e:
         logger.exception(f"The install script failed! {p.stdout=} {p.stderr=}")
         raise e

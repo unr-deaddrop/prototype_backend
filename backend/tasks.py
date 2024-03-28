@@ -2,6 +2,7 @@
 All shared Celery tasks.
 """
 
+from pathlib import Path
 from typing import Any, Optional
 import time
 import logging
@@ -12,11 +13,12 @@ from django_celery_results.models import TaskResult
 from pydantic import TypeAdapter
 
 from backend.models import Agent, Endpoint
-from backend.serializers import EndpointSerializer
+from backend.serializers import EndpointSerializer, AgentSerializer
 from django.contrib.auth.models import User
 from django.db.models.query import QuerySet
 import backend.messaging as messaging
 import backend.payloads as payloads
+import backend.packages as packages
 
 
 from deaddrop_meta.protocol_lib import DeadDropMessage, CommandRequestPayload, DeadDropMessageType
@@ -195,6 +197,27 @@ def receive_messages(
     # to just return a list of message IDs that can be looked up in the db
     # return [str(msg.message_id) for msg in msgs]
     
-    # XXX: For demonstration, dump the entire received message.
+    # XXX: For demonstration, dump the entire received message. In practice, 
+    # it's lighter to just return the message IDs.
     ta = TypeAdapter(list[DeadDropMessage])
-    return ta.dump_python(msgs)
+    return ta.dump_json(msgs).decode('utf-8')
+
+@shared_task
+def install_agent(bundle_path: str, user_id: Optional[int] = None) -> dict[str, Any]:
+    """
+    Install an agent through the package manager.
+    """
+    # Associate the current task with the specified user
+    user = add_user_id_to_task(user_id)
+    
+    # Reconstruct temporary path
+    bundle_path: Path = Path(bundle_path).resolve()
+    
+    task_id = current_task.request.id
+    agent_obj = packages.install_agent(bundle_path, user, task_id)
+    
+    # Manually blow up temporary path
+    bundle_path.unlink()
+    
+    serializer = AgentSerializer(agent_obj)
+    return serializer.data
